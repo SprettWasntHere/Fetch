@@ -10,7 +10,7 @@ A simple python script for grabbing media such as audio and video.
 
 
 # Build instructions
-1. Download the ffmpeg and the ffprobe binaries.
+1. Download the ffmpeg and the ffprobe binaries (https://www.gyan.dev/ffmpeg/builds/).
 2. Place `fetch.py` in the same folder as the ffmpeg and ffprobe binaries.
 3. Make sure you have PyInstaller installed.
 4. Open your terminal in the folder mentioned above and run the following command: `pyinstaller --onedir --noconsole --add-binary "ffmpeg.exe;." --add-binary "ffprobe.exe;." fetch.py`
