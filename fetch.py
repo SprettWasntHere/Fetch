@@ -2,6 +2,7 @@ import ctypes
 import json
 import os
 import random
+import shutil
 import sys
 import threading
 from time import sleep
@@ -495,13 +496,14 @@ class MediaDownloaderApp:
         elif "WAV" in format_choice:
             audio_format = "wav"
 
-        ffmpeg_dir = resource_path()
-
         ydl_opts = {
             "outtmpl": os.path.join(self.download_path, "%(title)s.%(ext)s"),
             "quiet": True,
-            "ffmpeg_location": ffmpeg_dir,
         }
+
+        bundled_ffmpeg_dir = resource_path()
+        if shutil.which("ffmpeg", path=bundled_ffmpeg_dir):
+            ydl_opts["ffmpeg_location"] = bundled_ffmpeg_dir
 
         if audio_format:
             ydl_opts.update({
