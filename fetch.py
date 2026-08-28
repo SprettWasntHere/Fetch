@@ -41,7 +41,6 @@ def resource_path(relative_path="."):
 
 def load_saved_directory():
     default_dir = os.path.join(os.path.expanduser("~"), "Downloads")
-    
     return default_dir
 
 
@@ -338,7 +337,7 @@ class MediaDownloaderApp:
             self.dropdown_popup = None
             return
 
-        options = ["Video (MP4)", "Audio (MP3)", "Audio (WAV)"]
+        options = ["Video (MP4)", "Audio (MP3)", "Audio (MP3 + Cover)", "Audio (WAV)"]
 
         self.dropdown_popup = tk.Toplevel(self.root)
         self.dropdown_popup.overrideredirect(True)
@@ -413,7 +412,6 @@ class MediaDownloaderApp:
             self.dir_entry.delete(0, tk.END)
             self.dir_entry.insert(0, self.download_path)
             self.dir_entry.config(state="readonly")
-            #save_directory(self.download_path)
 
     def log_status(self, text):
         if threading.current_thread() != threading.main_thread():
@@ -456,18 +454,51 @@ class MediaDownloaderApp:
 
         format_choice = self.format_var.get()
         audio_format = None
+        embed_cover = False
 
         if "MP3" in format_choice:
             audio_format = "mp3"
+            if "Cover" in format_choice:
+                embed_cover = True
         elif "WAV" in format_choice:
             audio_format = "wav"
 
+        def ydl_hook(d):
+            if d['status'] == 'downloading':
+                filename = os.path.basename(d.get('filename', 'file'))
+                if not getattr(self, '_current_download_logged', False):
+                    self.log_status(f"Downloading: {filename}")
+                    self._current_download_logged = True
+            elif d['status'] == 'finished':
+                filename = os.path.basename(d.get('filename', 'file'))
+                self.log_status(f"Finished: {filename}")
+                self._current_download_logged = False
+
+        self.log_status(f"Analyzing URL: {url}")
+        is_playlist = False
+        try:
+            with yt_dlp.YoutubeDL({'quiet': True, 'extract_flat': 'in_playlist'}) as ydl:
+                info = ydl.extract_info(url, download=False)
+                if info:
+                    if 'entries' in info or info.get('_type') in ['playlist', 'multi_video']:
+                        is_playlist = True
+                    elif info.get('playlist_title') or info.get('album'):
+                        is_playlist = True
+        except Exception:
+            pass
+
+        if is_playlist:
+            outtmpl = os.path.join(self.download_path, '%(playlist_title|playlist|album)s', '%(title)s.%(ext)s')
+        else:
+            outtmpl = os.path.join(self.download_path, '%(title)s.%(ext)s')
+
         ydl_opts = {
-            "outtmpl": os.path.join(self.download_path, "%(title)s.%(ext)s"),
+            "outtmpl": outtmpl,
             "quiet": True,
+            "no_warnings": True,
+            "progress_hooks": [ydl_hook],
         }
 
-        # Updated to check and use binaries specifically from the ./bin/ directory (supporting PyInstaller bundles via resource_path)
         bundled_ffmpeg_dir = resource_path("bin")
         if shutil.which("ffmpeg", path=bundled_ffmpeg_dir):
             ydl_opts["ffmpeg_location"] = bundled_ffmpeg_dir
@@ -475,17 +506,27 @@ class MediaDownloaderApp:
         if audio_format:
             ydl_opts.update({
                 "format": "bestaudio/best",
+                "embedmetadata": True,
                 "postprocessors": [{
                     "key": "FFmpegExtractAudio",
                     "preferredcodec": audio_format,
                     "preferredquality": "192",
                 }],
             })
+
+            if embed_cover:
+                ydl_opts.update({
+                    "writethumbnail": True,
+                    "embedthumbnail": True,
+                    "postprocessor_args": [
+                        "-id3v2_version", "3",
+                        "-write_id3v1", "1"
+                    ],
+                })
+                ydl_opts["postprocessors"].append({"key": "EmbedThumbnail"})
         else:
             ydl_opts["format"] = "bestvideo+bestaudio/best"
             ydl_opts["merge_output_format"] = "mp4"
-
-        self.log_status(f"Fetching: {url}")
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
