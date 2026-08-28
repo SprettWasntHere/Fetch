@@ -41,24 +41,8 @@ def resource_path(relative_path="."):
 
 def load_saved_directory():
     default_dir = os.path.join(os.path.expanduser("~"), "Downloads")
-    if os.path.exists(CONFIG_FILE):
-        try:
-            with open(CONFIG_FILE, "r") as f:
-                data = json.load(f)
-                saved_path = data.get("download_directory")
-                if saved_path and os.path.exists(saved_path):
-                    return saved_path
-        except Exception:
-            pass
-    return default_dir if os.path.exists(default_dir) else os.getcwd()
-
-
-def save_directory(path):
-    try:
-        with open(CONFIG_FILE, "w") as f:
-            json.dump({"download_directory": path}, f)
-    except Exception as e:
-        print(f"Failed to save settings: {e}")
+    
+    return default_dir
 
 
 def get_random_bright_color():
@@ -166,24 +150,6 @@ class MediaDownloaderApp:
 
         self._build_win95_ui()
         self._center_window(SIZE_X, SIZE_Y)
-
-        self.root.after(10, self._force_taskbar_icon)
-
-    def _force_taskbar_icon(self):
-        try:
-            GWL_EXSTYLE = -20
-            WS_EX_APPWINDOW = 0x00040000
-            WS_EX_TOOLWINDOW = 0x00000080
-
-            hwnd = ctypes.windll.user32.GetParent(self.root.winfo_id())
-            style = ctypes.windll.user32.GetWindowLongPtrW(hwnd, GWL_EXSTYLE)
-            style = (style & ~WS_EX_TOOLWINDOW) | WS_EX_APPWINDOW
-            ctypes.windll.user32.SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style)
-
-            self.root.withdraw()
-            self.root.after(10, self.root.deiconify)
-        except Exception as e:
-            print(f"Taskbar style applied: {e}")
 
     def _center_window(self, width, height):
         self.root.update_idletasks()
@@ -447,7 +413,7 @@ class MediaDownloaderApp:
             self.dir_entry.delete(0, tk.END)
             self.dir_entry.insert(0, self.download_path)
             self.dir_entry.config(state="readonly")
-            save_directory(self.download_path)
+            #save_directory(self.download_path)
 
     def log_status(self, text):
         if threading.current_thread() != threading.main_thread():
