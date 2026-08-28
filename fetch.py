@@ -501,7 +501,8 @@ class MediaDownloaderApp:
             "quiet": True,
         }
 
-        bundled_ffmpeg_dir = resource_path()
+        # Updated to check and use binaries specifically from the ./bin/ directory (supporting PyInstaller bundles via resource_path)
+        bundled_ffmpeg_dir = resource_path("bin")
         if shutil.which("ffmpeg", path=bundled_ffmpeg_dir):
             ydl_opts["ffmpeg_location"] = bundled_ffmpeg_dir
 
