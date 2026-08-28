@@ -36,8 +36,29 @@ def resource_path(relative_path="."):
         base_path = sys._MEIPASS
     except AttributeError:
         base_path = os.path.abspath(".")
+    
+    if relative_path in ("icon.ico", "icon.png"):
+        relative_path = os.path.join("media", relative_path)
+    
     return os.path.join(base_path, relative_path)
 
+def fix_win95_taskbar(root):
+    try:
+        import ctypes
+        GWL_EXSTYLE = -20
+        WS_EX_APPWINDOW = 0x00040000
+        WS_EX_TOOLWINDOW = 0x00000080
+        
+        hwnd = ctypes.windll.user32.GetParent(root.winfo_id())
+        style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+        style = style & ~WS_EX_TOOLWINDOW
+        style = style | WS_EX_APPWINDOW
+        ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
+        
+        root.withdraw()
+        root.deiconify()
+    except Exception:
+        pass
 
 def load_saved_directory():
     default_dir = os.path.join(os.path.expanduser("~"), "Downloads")
@@ -135,7 +156,7 @@ class MediaDownloaderApp:
         self.root.overrideredirect(True)
         self.root.configure(bg=WIN95_TEAL)
 
-        ico_path = resource_path("icon.ico")
+        ico_path = resource_path("media/icon.ico")
         if os.path.exists(ico_path):
             try:
                 self.root.iconbitmap(ico_path)
@@ -149,6 +170,7 @@ class MediaDownloaderApp:
 
         self._build_win95_ui()
         self._center_window(SIZE_X, SIZE_Y)
+        fix_win95_taskbar(self.root)
 
     def _center_window(self, width, height):
         self.root.update_idletasks()
@@ -165,8 +187,8 @@ class MediaDownloaderApp:
         self.title_bar = tk.Frame(self.outer_frame, bg=WIN95_NAVY, height=22)
         self.title_bar.pack(fill="x", side="top", padx=2, pady=2)
 
-        ico_path = resource_path("icon.ico")
-        png_path = resource_path("icon.png")
+        ico_path = resource_path("media/icon.ico")
+        png_path = resource_path("media/icon.png")
 
         if os.path.exists(png_path) or os.path.exists(ico_path):
             try:
