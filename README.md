@@ -10,8 +10,8 @@ A simple python program for downloading media such as audio and video without th
 
 
 # Build instructions
-1. Download the ffmpeg and the ffprobe binaries (https://www.gyan.dev/ffmpeg/builds/).
-2. Create a folder named bin in the project directory and place both binaries inside it.
+1. Download the project zip or use git clone to download the repo.
+2. Open your terminal in the project directory.
 3. Make sure you have PyInstaller installed.
 4. Open your terminal in the folder mentioned above and run the following command: `python -m PyInstaller --onedir --noconsole --add-binary "bin/ffmpeg.exe;." --add-binary "bin/ffprobe.exe;." fetch.py`
 5. Done
