@@ -32,6 +32,7 @@ def run_download(url, format_choice, download_path, log_callback, resource_path_
         else:
             track_urls = [url]
             target_dir = download_path
+            playlist_name = "Single"
 
         os.makedirs(target_dir, exist_ok=True)
 
@@ -50,13 +51,25 @@ def run_download(url, format_choice, download_path, log_callback, resource_path_
                 track_opts["ffmpeg_location"] = bundled_ffmpeg_dir
 
             if audio_format:
+                fallback_album = playlist_name if playlist_name != "Single" else os.path.basename(target_dir) or "Single"
+
                 track_opts["format"] = "bestaudio/best"
                 track_opts["embedmetadata"] = True
-                track_opts["postprocessors"] = [{
-                    "key": "FFmpegExtractAudio",
-                    "preferredcodec": audio_format,
-                    "preferredquality": "192",
-                }]
+                track_opts["postprocessors"] = [
+                    {
+                        "key": "FFmpegExtractAudio",
+                        "preferredcodec": audio_format,
+                        "preferredquality": "192",
+                    },
+                    {
+                        "key": "FFmpegMetadata",
+                    }
+                ]
+                
+                # Forcefully stamp the album tag via FFmpeg parameters
+                track_opts["postprocessor_args"] = [
+                    "-metadata", f"album={fallback_album}"
+                ]
 
                 if embed_cover:
                     track_opts["writethumbnail"] = True
@@ -65,7 +78,7 @@ def run_download(url, format_choice, download_path, log_callback, resource_path_
                         "default": os.path.join(target_dir, '%(title)s [%(id)s].%(ext)s'),
                         "thumbnail": os.path.join(target_dir, '%(title)s [%(id)s]')
                     }
-                    track_opts["postprocessor_args"] = ["-id3v2_version", "3", "-write_id3v1", "1"]
+                    track_opts["postprocessor_args"].extend(["-id3v2_version", "3", "-write_id3v1", "1"])
                     track_opts["postprocessors"].append({"key": "EmbedThumbnail"})
             else:
                 track_opts["format"] = "bestvideo+bestaudio/best"
