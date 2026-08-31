@@ -95,7 +95,6 @@ def run_download(url, format_choice, download_path, log_callback, resource_path_
                         log_callback(f"[{timestamp}] Downloading: {filename}")
                         logged_files.add(filename)
                     
-                    # Optional: calculate granular chunk progress if available
                     total_bytes = d.get('total_bytes') or d.get('total_bytes_estimate')
                     downloaded_bytes = d.get('downloaded_bytes', 0)
                     if total_bytes and progress_callback:
@@ -117,7 +116,7 @@ def run_download(url, format_choice, download_path, log_callback, resource_path_
                     progress_callback((completed_tracks[0] / total_tracks) * 100)
             except Exception as e:
                 log_callback(f"Error downloading track: {e}")
-                completed_tracks[0] += 1 # Count failed ones too to finish progress
+                completed_tracks[0] += 1
 
         max_workers = min(4, len(track_urls)) if track_urls else 1
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
