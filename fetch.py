@@ -1,5 +1,4 @@
 import ctypes
-import json
 import os
 import random
 import shutil
@@ -9,7 +8,6 @@ from time import sleep
 import tkinter as tk
 from tkinter import filedialog
 
-CONFIG_FILE = "config.json"
 APP_TITLE = "Fetch"
 SIZE_X = 540
 SIZE_Y = 400
@@ -42,17 +40,16 @@ def resource_path(relative_path="."):
     
     return os.path.join(base_path, relative_path)
 
+
 def fix_win95_taskbar(root):
     try:
-        import ctypes
         GWL_EXSTYLE = -20
         WS_EX_APPWINDOW = 0x00040000
         WS_EX_TOOLWINDOW = 0x00000080
         
         hwnd = ctypes.windll.user32.GetParent(root.winfo_id())
         style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-        style = style & ~WS_EX_TOOLWINDOW
-        style = style | WS_EX_APPWINDOW
+        style = (style & ~WS_EX_TOOLWINDOW) | WS_EX_APPWINDOW
         ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
         
         root.withdraw()
@@ -60,16 +57,9 @@ def fix_win95_taskbar(root):
     except Exception:
         pass
 
-def load_saved_directory():
-    default_dir = os.path.join(os.path.expanduser("~"), "Downloads")
-    return default_dir
-
 
 def get_random_bright_color():
-    r = random.randint(33, 255)
-    g = random.randint(33, 255)
-    b = random.randint(33, 255)
-    return f"#{r:02X}{g:02X}{b:02X}"
+    return f"#{random.randint(33, 255):02X}{random.randint(33, 255):02X}{random.randint(33, 255):02X}"
 
 
 def show_win95_popup(parent, title, message):
@@ -84,67 +74,23 @@ def show_win95_popup(parent, title, message):
     title_bar = tk.Frame(outer, bg=WIN95_NAVY, height=22)
     title_bar.pack(fill="x", side="top", padx=2, pady=2)
 
-    t_label = tk.Label(
-        title_bar,
-        text=title,
-        bg=WIN95_NAVY,
-        fg=WIN95_WHITE,
-        font=WIN95_FONT_BOLD
-    )
-    t_label.pack(side="left", padx=4)
+    tk.Label(title_bar, text=title, bg=WIN95_NAVY, fg=WIN95_WHITE, font=WIN95_FONT_BOLD).pack(side="left", padx=4)
 
-    close_btn = tk.Button(
-        title_bar,
-        text="✕",
-        bg=WIN95_BG,
-        fg="black",
-        font=("MS Sans Serif", 7, "bold"),
-        bd=1,
-        relief=tk.RAISED,
-        width=2,
-        height=1,
-        command=popup.destroy
-    )
-    close_btn.pack(side="right", padx=2, pady=2)
+    tk.Button(
+        title_bar, text="✕", bg=WIN95_BG, fg="black", font=("MS Sans Serif", 7, "bold"),
+        bd=1, relief=tk.RAISED, width=2, height=1, command=popup.destroy
+    ).pack(side="right", padx=2, pady=2)
 
     body = tk.Frame(outer, bg=WIN95_BG)
     body.pack(fill="both", expand=True, padx=12, pady=12)
 
-    msg_label = tk.Label(
-        body,
-        text=message,
-        bg=WIN95_BG,
-        fg="black",
-        font=WIN95_FONT,
-        wraplength=260,
-        justify="center"
-    )
-    msg_label.pack(pady=(4, 12))
-
-    ok_btn = tk.Button(
-        body,
-        text="OK",
-        bg=WIN95_BG,
-        bd=2,
-        relief=tk.RAISED,
-        font=WIN95_FONT,
-        width=8,
-        command=popup.destroy
-    )
-    ok_btn.pack()
+    tk.Label(body, text=message, bg=WIN95_BG, fg="black", font=WIN95_FONT, wraplength=260, justify="center").pack(pady=(4, 12))
+    tk.Button(body, text="OK", bg=WIN95_BG, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=8, command=popup.destroy).pack()
 
     popup.update_idletasks()
-    p_w = popup.winfo_width()
-    p_h = popup.winfo_height()
-    parent_x = parent.winfo_rootx()
-    parent_y = parent.winfo_rooty()
-    parent_w = parent.winfo_width()
-    parent_h = parent.winfo_height()
-
-    x = parent_x + (parent_w // 2) - (p_w // 2)
-    y = parent_y + (parent_h // 2) - (p_h // 2)
+    x = parent.winfo_rootx() + (parent.winfo_width() // 2) - (popup.winfo_width() // 2)
+    y = parent.winfo_rooty() + (parent.winfo_height() // 2) - (popup.winfo_height() // 2)
     popup.geometry(f"+{x}+{y}")
-
     popup.grab_set()
 
 
@@ -163,7 +109,7 @@ class MediaDownloaderApp:
             except Exception:
                 pass
 
-        self.download_path = load_saved_directory()
+        self.download_path = os.path.join(os.path.expanduser("~"), "Downloads")
         self.app_icon_img = None
         self.text_index = 0
         self.dropdown_popup = None
@@ -174,10 +120,8 @@ class MediaDownloaderApp:
 
     def _center_window(self, width, height):
         self.root.update_idletasks()
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-        x = (screen_width // 2) - (width // 2)
-        y = (screen_height // 2) - (height // 2)
+        x = (self.root.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.root.winfo_screenheight() // 2) - (height // 2)
         self.root.geometry(f"{width}x{height}+{x}+{y}")
 
     def _build_win95_ui(self):
@@ -195,40 +139,20 @@ class MediaDownloaderApp:
                 img_file = png_path if os.path.exists(png_path) else ico_path
                 img = tk.PhotoImage(file=img_file)
                 self.app_icon_img = img.subsample(max(1, img.width() // 16))
-                self.icon_label = tk.Label(
-                    self.title_bar, image=self.app_icon_img, bg=WIN95_NAVY
-                )
+                self.icon_label = tk.Label(self.title_bar, image=self.app_icon_img, bg=WIN95_NAVY)
             except Exception:
-                self.icon_label = tk.Label(
-                    self.title_bar, text="", bg=WIN95_NAVY, fg=WIN95_WHITE, font=("MS Sans Serif", 9)
-                )
+                self.icon_label = tk.Label(self.title_bar, text="", bg=WIN95_NAVY, fg=WIN95_WHITE, font=WIN95_FONT)
         else:
-            self.icon_label = tk.Label(
-                self.title_bar, text="", bg=WIN95_NAVY, fg=WIN95_WHITE, font=("MS Sans Serif", 9)
-            )
+            self.icon_label = tk.Label(self.title_bar, text="", bg=WIN95_NAVY, fg=WIN95_WHITE, font=WIN95_FONT)
 
         self.icon_label.pack(side="left", padx=(4, 2))
 
-        self.title_label = tk.Label(
-            self.title_bar,
-            text=APP_TITLE,
-            bg=WIN95_NAVY,
-            fg=WIN95_WHITE,
-            font=WIN95_FONT_BOLD,
-        )
+        self.title_label = tk.Label(self.title_bar, text=APP_TITLE, bg=WIN95_NAVY, fg=WIN95_WHITE, font=WIN95_FONT_BOLD)
         self.title_label.pack(side="left", padx=2)
 
         self.close_btn = tk.Button(
-            self.title_bar,
-            text="✕",
-            bg=WIN95_BG,
-            fg="black",
-            font=("MS Sans Serif", 7, "bold"),
-            bd=1,
-            relief=tk.RAISED,
-            width=2,
-            height=1,
-            command=self.close_app,
+            self.title_bar, text="✕", bg=WIN95_BG, fg="black", font=("MS Sans Serif", 7, "bold"),
+            bd=1, relief=tk.RAISED, width=2, height=1, command=self.close_app
         )
         self.close_btn.pack(side="right", padx=2, pady=2)
 
@@ -242,24 +166,13 @@ class MediaDownloaderApp:
         form_frame = tk.Frame(content_area, bg=WIN95_BG)
         form_frame.pack(fill="x", side="top")
 
-        tk.Label(
-            form_frame, text="Media URL:", bg=WIN95_BG, font=WIN95_FONT
-        ).grid(row=0, column=0, sticky="w", pady=4)
+        tk.Label(form_frame, text="Media URL:", bg=WIN95_BG, font=WIN95_FONT).grid(row=0, column=0, sticky="w", pady=4)
 
-        self.url_entry = tk.Entry(
-            form_frame,
-            bg=WIN95_WHITE,
-            fg="black",
-            bd=2,
-            relief=tk.SUNKEN,
-            font=WIN95_FONT,
-        )
+        self.url_entry = tk.Entry(form_frame, bg=WIN95_WHITE, fg="black", bd=2, relief=tk.SUNKEN, font=WIN95_FONT)
         self.url_entry.grid(row=0, column=1, columnspan=2, sticky="ew", padx=(8, 0), pady=4)
         self.url_entry.focus()
 
-        tk.Label(
-            form_frame, text="Media Format:", bg=WIN95_BG, font=WIN95_FONT
-        ).grid(row=1, column=0, sticky="w", pady=4)
+        tk.Label(form_frame, text="Media Format:", bg=WIN95_BG, font=WIN95_FONT).grid(row=1, column=0, sticky="w", pady=4)
 
         self.format_var = tk.StringVar(value="Video (MP4)")
 
@@ -267,86 +180,43 @@ class MediaDownloaderApp:
         self.combo_container.grid(row=1, column=1, sticky="w", padx=(8, 0), pady=4)
 
         self.combo_label = tk.Label(
-            self.combo_container,
-            textvariable=self.format_var,
-            bg=WIN95_WHITE,
-            fg="black",
-            font=WIN95_FONT,
-            anchor="w",
-            width=18,
-            cursor="arrow",
+            self.combo_container, textvariable=self.format_var, bg=WIN95_WHITE, fg="black",
+            font=WIN95_FONT, anchor="w", width=18, cursor="arrow"
         )
         self.combo_label.pack(side="left", fill="x", expand=True, padx=(2, 0))
 
         self.combo_btn = tk.Button(
-            self.combo_container,
-            text="▼",
-            bg=WIN95_BG,
-            activebackground=WIN95_BG,
-            font=("MS Sans Serif", 7),
-            bd=1,
-            relief=tk.RAISED,
-            width=2,
-            height=1,
-            command=self._toggle_instant_dropdown,
+            self.combo_container, text="▼", bg=WIN95_BG, activebackground=WIN95_BG,
+            font=("MS Sans Serif", 7), bd=1, relief=tk.RAISED, width=2, height=1,
+            command=self._toggle_instant_dropdown
         )
         self.combo_btn.pack(side="right", fill="y")
 
         self.combo_label.bind("<Button-1>", lambda e: self._toggle_instant_dropdown())
         self.combo_container.bind("<Button-1>", lambda e: self._toggle_instant_dropdown())
 
-        tk.Label(
-            form_frame, text="Save Directory:", bg=WIN95_BG, font=WIN95_FONT
-        ).grid(row=2, column=0, sticky="w", pady=4)
+        tk.Label(form_frame, text="Save Directory:", bg=WIN95_BG, font=WIN95_FONT).grid(row=2, column=0, sticky="w", pady=4)
 
-        self.dir_entry = tk.Entry(
-            form_frame,
-            bg=WIN95_BG,
-            fg="black",
-            bd=2,
-            relief=tk.SUNKEN,
-            font=WIN95_FONT,
-        )
+        self.dir_entry = tk.Entry(form_frame, bg=WIN95_BG, fg="black", bd=2, relief=tk.SUNKEN, font=WIN95_FONT)
         self.dir_entry.insert(0, self.download_path)
         self.dir_entry.config(state="readonly")
         self.dir_entry.grid(row=2, column=1, sticky="ew", padx=(8, 4), pady=4)
 
-        browse_btn = tk.Button(
-            form_frame,
-            text="Browse...",
-            bg=WIN95_BG,
-            bd=2,
-            relief=tk.RAISED,
-            font=WIN95_FONT,
-            command=self.browse_folder,
-        )
+        browse_btn = tk.Button(form_frame, text="Browse...", bg=WIN95_BG, bd=2, relief=tk.RAISED, font=WIN95_FONT, command=self.browse_folder)
         browse_btn.grid(row=2, column=2, sticky="e", pady=4)
 
         form_frame.columnconfigure(1, weight=1)
 
         self.download_btn = tk.Button(
-            content_area,
-            text=WIN95_DEFAULT_BTN_TEXT,
-            bg=WIN95_BG,
-            fg="#000000",
-            disabledforeground="#000000",
-            bd=2,
-            relief=tk.RAISED,
-            font=WIN95_FONT_BOLD,
-            pady=3,
-            command=self.start_download_thread,
+            content_area, text=WIN95_DEFAULT_BTN_TEXT, bg=WIN95_BG, fg="#000000",
+            disabledforeground="#000000", bd=2, relief=tk.RAISED, font=WIN95_FONT_BOLD,
+            pady=3, command=self.start_download_thread
         )
         self.download_btn.pack(fill="x", pady=(10, 8))
 
         self.status_box = tk.Text(
-            content_area,
-            height=9,
-            bg=WIN95_WHITE,
-            fg="black",
-            bd=2,
-            relief=tk.SUNKEN,
-            font=("Courier New", 9),
-            state="disabled",
+            content_area, height=9, bg=WIN95_WHITE, fg="black", bd=2,
+            relief=tk.SUNKEN, font=("Courier New", 9), state="disabled"
         )
         self.status_box.pack(fill="both", expand=True)
 
@@ -354,7 +224,7 @@ class MediaDownloaderApp:
         self.root.destroy()
 
     def _toggle_instant_dropdown(self):
-        if hasattr(self, "dropdown_popup") and self.dropdown_popup and self.dropdown_popup.winfo_exists():
+        if self.dropdown_popup and self.dropdown_popup.winfo_exists():
             self.dropdown_popup.destroy()
             self.dropdown_popup = None
             return
@@ -376,15 +246,8 @@ class MediaDownloaderApp:
         popup_frame.pack(fill="both", expand=True)
 
         listbox = tk.Listbox(
-            popup_frame,
-            bg=WIN95_WHITE,
-            fg="black",
-            selectbackground=WIN95_NAVY,
-            selectforeground=WIN95_WHITE,
-            font=WIN95_FONT,
-            bd=0,
-            highlightthickness=0,
-            activestyle="none",
+            popup_frame, bg=WIN95_WHITE, fg="black", selectbackground=WIN95_NAVY,
+            selectforeground=WIN95_WHITE, font=WIN95_FONT, bd=0, highlightthickness=0, activestyle="none"
         )
         listbox.pack(fill="both", expand=True)
 
@@ -411,7 +274,7 @@ class MediaDownloaderApp:
         listbox.focus_set()
 
     def _close_dropdown_delay(self):
-        if hasattr(self, "dropdown_popup") and self.dropdown_popup:
+        if self.dropdown_popup:
             self.dropdown_popup.destroy()
             self.dropdown_popup = None
 
@@ -420,10 +283,8 @@ class MediaDownloaderApp:
         self._y = event.y
 
     def _on_move(self, event):
-        deltax = event.x - self._x
-        deltay = event.y - self._y
-        x = self.root.winfo_x() + deltax
-        y = self.root.winfo_y() + deltay
+        x = self.root.winfo_x() + (event.x - self._x)
+        y = self.root.winfo_y() + (event.y - self._y)
         self.root.geometry(f"+{x}+{y}")
 
     def browse_folder(self):
@@ -449,9 +310,7 @@ class MediaDownloaderApp:
 
     def _update_button_style(self):
         self.text_index = (self.text_index + 1) % len(DOWNLOAD_TEXTS)
-        new_text = DOWNLOAD_TEXTS[self.text_index]
-        new_color = get_random_bright_color()
-        self.download_btn.config(text=new_text, bg=new_color)
+        self.download_btn.config(text=DOWNLOAD_TEXTS[self.text_index], bg=get_random_bright_color())
 
     def _reset_button_style(self):
         self.download_btn.config(text=WIN95_DEFAULT_BTN_TEXT, bg=WIN95_BG)
@@ -465,6 +324,7 @@ class MediaDownloaderApp:
         self._update_button_style()
         self.url_entry.delete(0, tk.END)
         self.download_btn.config(state="disabled")
+        
         self.status_box.config(state="normal")
         self.status_box.delete("1.0", tk.END)
         self.status_box.config(state="disabled")
@@ -473,90 +333,102 @@ class MediaDownloaderApp:
 
     def run_download(self, url):
         import yt_dlp
+        from concurrent.futures import ThreadPoolExecutor
 
         format_choice = self.format_var.get()
-        audio_format = None
-        embed_cover = False
-
-        if "MP3" in format_choice:
-            audio_format = "mp3"
-            if "Cover" in format_choice:
-                embed_cover = True
-        elif "WAV" in format_choice:
-            audio_format = "wav"
-
-        def ydl_hook(d):
-            if d['status'] == 'downloading':
-                filename = os.path.basename(d.get('filename', 'file'))
-                if not getattr(self, '_current_download_logged', False):
-                    self.log_status(f"Downloading: {filename}")
-                    self._current_download_logged = True
-            elif d['status'] == 'finished':
-                filename = os.path.basename(d.get('filename', 'file'))
-                self.log_status(f"Finished: {filename}")
-                self._current_download_logged = False
+        audio_format = "mp3" if "MP3" in format_choice else ("wav" if "WAV" in format_choice else None)
+        embed_cover = "Cover" in format_choice
 
         self.log_status(f"Analyzing URL: {url}")
-        is_playlist = False
+        
         try:
-            with yt_dlp.YoutubeDL({'quiet': True, 'extract_flat': 'in_playlist'}) as ydl:
+            pre_opts = {"quiet": True, "no_warnings": True, "extract_flat": "in_playlist"}
+            bundled_ffmpeg_dir = resource_path("bin")
+            if shutil.which("ffmpeg", path=bundled_ffmpeg_dir):
+                pre_opts["ffmpeg_location"] = bundled_ffmpeg_dir
+
+            with yt_dlp.YoutubeDL(pre_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
-                if info:
-                    if 'entries' in info or info.get('_type') in ['playlist', 'multi_video']:
-                        is_playlist = True
-                    elif info.get('playlist_title') or info.get('album'):
-                        is_playlist = True
-        except Exception:
-            pass
+            
+            if not info:
+                self.log_status("Failed to extract metadata.")
+                return
 
-        if is_playlist:
-            outtmpl = os.path.join(self.download_path, '%(playlist_title|playlist|album)s', '%(title)s.%(ext)s')
-        else:
-            outtmpl = os.path.join(self.download_path, '%(title)s.%(ext)s')
+            is_playlist = 'entries' in info or info.get('_type') in ['playlist', 'multi_video'] or bool(info.get('playlist_title') or info.get('album'))
 
-        ydl_opts = {
-            "outtmpl": outtmpl,
-            "quiet": True,
-            "no_warnings": True,
-            "progress_hooks": [ydl_hook],
-        }
+            if is_playlist and 'entries' in info:
+                track_urls = [entry.get('url') or f"https://www.youtube.com/watch?v={entry.get('id')}" for entry in info['entries']]
+                playlist_name = info.get('playlist_title') or info.get('title') or info.get('album') or 'Playlist'
+                target_dir = os.path.join(self.download_path, playlist_name)
+            else:
+                track_urls = [url]
+                target_dir = self.download_path
 
-        bundled_ffmpeg_dir = resource_path("bin")
-        if shutil.which("ffmpeg", path=bundled_ffmpeg_dir):
-            ydl_opts["ffmpeg_location"] = bundled_ffmpeg_dir
+            os.makedirs(target_dir, exist_ok=True)
 
-        if audio_format:
-            ydl_opts.update({
-                "format": "bestaudio/best",
-                "embedmetadata": True,
-                "postprocessors": [{
-                    "key": "FFmpegExtractAudio",
-                    "preferredcodec": audio_format,
-                    "preferredquality": "192",
-                }],
-            })
+            if len(track_urls) > 1:
+                self.log_status(f"Found playlist with {len(track_urls)} tracks.")
 
-            if embed_cover:
-                ydl_opts.update({
-                    "writethumbnail": True,
-                    "embedthumbnail": True,
-                    "postprocessor_args": [
-                        "-id3v2_version", "3",
-                        "-write_id3v1", "1"
-                    ],
-                })
-                ydl_opts["postprocessors"].append({"key": "EmbedThumbnail"})
-        else:
-            ydl_opts["format"] = "bestvideo+bestaudio/best"
-            ydl_opts["merge_output_format"] = "mp4"
+            # Worker function for parallel downloads
+            def download_single_track(track_url):
+                track_opts = {
+                    "quiet": True,
+                    "no_warnings": True,
+                    "concurrent_fragment_downloads": 4,
+                    "outtmpl": os.path.join(target_dir, '%(title)s [%(id)s].%(ext)s'),
+                }
 
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url])
+                if bundled_ffmpeg_dir and os.path.exists(bundled_ffmpeg_dir):
+                    track_opts["ffmpeg_location"] = bundled_ffmpeg_dir
+
+                if audio_format:
+                    track_opts["format"] = "bestaudio/best"
+                    track_opts["embedmetadata"] = True
+                    track_opts["postprocessors"] = [{
+                        "key": "FFmpegExtractAudio",
+                        "preferredcodec": audio_format,
+                        "preferredquality": "192",
+                    }]
+
+                    if embed_cover:
+                        track_opts["writethumbnail"] = True
+                        track_opts["embedthumbnail"] = True
+                        track_opts["outtmpl"] = {
+                            "default": os.path.join(target_dir, '%(title)s [%(id)s].%(ext)s'),
+                            "thumbnail": os.path.join(target_dir, '%(title)s [%(id)s]')
+                        }
+                        track_opts["postprocessor_args"] = ["-id3v2_version", "3", "-write_id3v1", "1"]
+                        track_opts["postprocessors"].append({"key": "EmbedThumbnail"})
+                else:
+                    track_opts["format"] = "bestvideo+bestaudio/best"
+                    track_opts["merge_output_format"] = "mp4"
+
+                logged_files = set()
+
+                def ydl_hook(d):
+                    if d['status'] == 'downloading':
+                        filename = os.path.basename(d.get('filename', 'file'))
+                        if filename not in logged_files:
+                            self.log_status(f"Downloading: {filename}")
+                            logged_files.add(filename)
+                    elif d['status'] == 'finished':
+                        self.log_status(f"Finished: {os.path.basename(d.get('filename', 'file'))}")
+
+                track_opts["progress_hooks"] = [ydl_hook]
+
+                try:
+                    with yt_dlp.YoutubeDL(track_opts) as ydl:
+                        ydl.download([track_url])
+                except Exception as e:
+                    self.log_status(f"Error downloading track: {e}")
+
+            # Run concurrent downloads safely
+            max_workers = min(4, len(track_urls)) if track_urls else 1
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                executor.map(download_single_track, track_urls)
 
             self.log_status("\nMedia fetched successfully!")
-            self.log_status(f"Saved to: {self.download_path}")
-
+            self.log_status(f"Saved to: {target_dir}")
             self.print_art()
 
         except Exception as e:
