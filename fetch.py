@@ -8,6 +8,7 @@ import tkinter as tk
 from tkinter import filedialog
 
 from download import run_download
+from texts import DOWNLOAD_TEXTS
 
 APP_TITLE = "Fetch"
 SIZE_X = 540
@@ -21,14 +22,6 @@ WIN95_FONT = ("MS Sans Serif", 9)
 WIN95_FONT_BOLD = ("MS Sans Serif", 9, "bold")
 
 WIN95_DEFAULT_BTN_TEXT = "Download"
-
-DOWNLOAD_TEXTS = [
-    "Fetching...",
-    "Retrieving...",
-    "Chasing Down...",
-    "Rawr!"
-]
-
 
 def resource_path(relative_path="."):
     try:
@@ -60,7 +53,9 @@ def fix_win95_taskbar(root):
 
 
 def get_random_bright_color():
-    return f"#{random.randint(33, 255):02X}{random.randint(33, 255):02X}{random.randint(33, 255):02X}"
+    min_brightness = 150
+    max_brightness = 255
+    return f"#{random.randint(min_brightness, max_brightness):02X}{random.randint(min_brightness, max_brightness):02X}{random.randint(min_brightness, max_brightness):02X}"
 
 
 class MediaDownloaderApp:
@@ -277,7 +272,7 @@ class MediaDownloaderApp:
         self.status_box.config(state="disabled")
 
     def _update_button_style(self):
-        self.text_index = (self.text_index + 1) % len(DOWNLOAD_TEXTS)
+        self.text_index = random.randint(0, len(DOWNLOAD_TEXTS) - 1)
         self.download_btn.config(text=DOWNLOAD_TEXTS[self.text_index], bg=get_random_bright_color())
 
     def _reset_button_style(self):
