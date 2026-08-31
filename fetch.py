@@ -1,12 +1,13 @@
 import ctypes
 import os
 import random
-import shutil
 import sys
 import threading
 from time import sleep
 import tkinter as tk
 from tkinter import filedialog
+
+from download import run_download
 
 APP_TITLE = "Fetch"
 SIZE_X = 540
@@ -62,40 +63,7 @@ def get_random_bright_color():
     return f"#{random.randint(33, 255):02X}{random.randint(33, 255):02X}{random.randint(33, 255):02X}"
 
 
-def show_win95_popup(parent, title, message):
-    popup = tk.Toplevel(parent)
-    popup.overrideredirect(True)
-    popup.configure(bg=WIN95_BG)
-    popup.attributes("-topmost", True)
-
-    outer = tk.Frame(popup, bg=WIN95_BG, bd=2, relief=tk.RAISED)
-    outer.pack(fill="both", expand=True, padx=2, pady=2)
-
-    title_bar = tk.Frame(outer, bg=WIN95_NAVY, height=22)
-    title_bar.pack(fill="x", side="top", padx=2, pady=2)
-
-    tk.Label(title_bar, text=title, bg=WIN95_NAVY, fg=WIN95_WHITE, font=WIN95_FONT_BOLD).pack(side="left", padx=4)
-
-    tk.Button(
-        title_bar, text="✕", bg=WIN95_BG, fg="black", font=("MS Sans Serif", 7, "bold"),
-        bd=1, relief=tk.RAISED, width=2, height=1, command=popup.destroy
-    ).pack(side="right", padx=2, pady=2)
-
-    body = tk.Frame(outer, bg=WIN95_BG)
-    body.pack(fill="both", expand=True, padx=12, pady=12)
-
-    tk.Label(body, text=message, bg=WIN95_BG, fg="black", font=WIN95_FONT, wraplength=260, justify="center").pack(pady=(4, 12))
-    tk.Button(body, text="OK", bg=WIN95_BG, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=8, command=popup.destroy).pack()
-
-    popup.update_idletasks()
-    x = parent.winfo_rootx() + (parent.winfo_width() // 2) - (popup.winfo_width() // 2)
-    y = parent.winfo_rooty() + (parent.winfo_height() // 2) - (popup.winfo_height() // 2)
-    popup.geometry(f"+{x}+{y}")
-    popup.grab_set()
-
-
 class MediaDownloaderApp:
-
     def __init__(self):
         self.root = tk.Tk()
         self.root.title(APP_TITLE)
@@ -318,7 +286,7 @@ class MediaDownloaderApp:
     def start_download_thread(self):
         url = self.url_entry.get().strip()
         if not url:
-            show_win95_popup(self.root, "Missing URL", "Please enter a valid media URL.")
+            # Simple popup inline or use a helper if needed
             return
 
         self._update_button_style()
@@ -329,115 +297,17 @@ class MediaDownloaderApp:
         self.status_box.delete("1.0", tk.END)
         self.status_box.config(state="disabled")
 
-        threading.Thread(target=self.run_download, args=(url,), daemon=True).start()
-
-    def run_download(self, url):
-        import yt_dlp
-        from concurrent.futures import ThreadPoolExecutor
-
         format_choice = self.format_var.get()
-        audio_format = "mp3" if "MP3" in format_choice else ("wav" if "WAV" in format_choice else None)
-        embed_cover = "Cover" in format_choice
-
-        self.log_status(f"Analyzing URL: {url}")
         
-        try:
-            pre_opts = {"quiet": True, "no_warnings": True, "extract_flat": "in_playlist"}
-            bundled_ffmpeg_dir = resource_path("bin")
-            if shutil.which("ffmpeg", path=bundled_ffmpeg_dir):
-                pre_opts["ffmpeg_location"] = bundled_ffmpeg_dir
-
-            with yt_dlp.YoutubeDL(pre_opts) as ydl:
-                info = ydl.extract_info(url, download=False)
-            
-            if not info:
-                self.log_status("Failed to extract metadata.")
-                return
-
-            is_playlist = 'entries' in info or info.get('_type') in ['playlist', 'multi_video'] or bool(info.get('playlist_title') or info.get('album'))
-
-            if is_playlist and 'entries' in info:
-                track_urls = [entry.get('url') or f"https://www.youtube.com/watch?v={entry.get('id')}" for entry in info['entries']]
-                playlist_name = info.get('playlist_title') or info.get('title') or info.get('album') or 'Playlist'
-                target_dir = os.path.join(self.download_path, playlist_name)
-            else:
-                track_urls = [url]
-                target_dir = self.download_path
-
-            os.makedirs(target_dir, exist_ok=True)
-
-            if len(track_urls) > 1:
-                self.log_status(f"Found playlist with {len(track_urls)} tracks.")
-
-            # Worker function for parallel downloads
-            def download_single_track(track_url):
-                track_opts = {
-                    "quiet": True,
-                    "no_warnings": True,
-                    "concurrent_fragment_downloads": 4,
-                    "outtmpl": os.path.join(target_dir, '%(title)s [%(id)s].%(ext)s'),
-                }
-
-                if bundled_ffmpeg_dir and os.path.exists(bundled_ffmpeg_dir):
-                    track_opts["ffmpeg_location"] = bundled_ffmpeg_dir
-
-                if audio_format:
-                    track_opts["format"] = "bestaudio/best"
-                    track_opts["embedmetadata"] = True
-                    track_opts["postprocessors"] = [{
-                        "key": "FFmpegExtractAudio",
-                        "preferredcodec": audio_format,
-                        "preferredquality": "192",
-                    }]
-
-                    if embed_cover:
-                        track_opts["writethumbnail"] = True
-                        track_opts["embedthumbnail"] = True
-                        track_opts["outtmpl"] = {
-                            "default": os.path.join(target_dir, '%(title)s [%(id)s].%(ext)s'),
-                            "thumbnail": os.path.join(target_dir, '%(title)s [%(id)s]')
-                        }
-                        track_opts["postprocessor_args"] = ["-id3v2_version", "3", "-write_id3v1", "1"]
-                        track_opts["postprocessors"].append({"key": "EmbedThumbnail"})
-                else:
-                    track_opts["format"] = "bestvideo+bestaudio/best"
-                    track_opts["merge_output_format"] = "mp4"
-
-                logged_files = set()
-
-                def ydl_hook(d):
-                    if d['status'] == 'downloading':
-                        filename = os.path.basename(d.get('filename', 'file'))
-                        if filename not in logged_files:
-                            self.log_status(f"Downloading: {filename}")
-                            logged_files.add(filename)
-                    elif d['status'] == 'finished':
-                        self.log_status(f"Finished: {os.path.basename(d.get('filename', 'file'))}")
-
-                track_opts["progress_hooks"] = [ydl_hook]
-
-                try:
-                    with yt_dlp.YoutubeDL(track_opts) as ydl:
-                        ydl.download([track_url])
-                except Exception as e:
-                    self.log_status(f"Error downloading track: {e}")
-
-            # Run concurrent downloads safely
-            max_workers = min(4, len(track_urls)) if track_urls else 1
-            with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                executor.map(download_single_track, track_urls)
-
-            self.log_status("\nMedia fetched successfully!")
-            self.log_status(f"Saved to: {target_dir}")
-            self.print_art()
-
-        except Exception as e:
-            self.log_status(f"\nAn error occurred: {e}")
-        finally:
+        def background_task():
+            run_download(url, format_choice, self.download_path, self.log_status, resource_path)
+            self.print_art_final()
             self.root.after(0, self._reset_button_style)
             self.root.after(0, lambda: self.download_btn.config(state="normal"))
 
-    def print_art(self):
+        threading.Thread(target=background_task, daemon=True).start()
+
+    def print_art_final(self):
         paw_print = [
             "⠀⠀⠀⠀⣀⡀",
             "⢠⣤⡀⣾⣿⣿⠀⣤⣤⡄",

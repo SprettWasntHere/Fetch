@@ -1,0 +1,102 @@
+import os
+import shutil
+from concurrent.futures import ThreadPoolExecutor
+import yt_dlp
+
+def run_download(url, format_choice, download_path, log_callback, resource_path_func):
+    audio_format = "mp3" if "MP3" in format_choice else ("wav" if "WAV" in format_choice else None)
+    embed_cover = "Cover" in format_choice
+
+    log_callback(f"Analyzing URL: {url}")
+    
+    try:
+        pre_opts = {"quiet": True, "no_warnings": True, "extract_flat": "in_playlist"}
+        bundled_ffmpeg_dir = resource_path_func("bin")
+        if shutil.which("ffmpeg", path=bundled_ffmpeg_dir):
+            pre_opts["ffmpeg_location"] = bundled_ffmpeg_dir
+
+        with yt_dlp.YoutubeDL(pre_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+        
+        if not info:
+            log_callback("Failed to extract metadata.")
+            return False
+
+        is_playlist = 'entries' in info or info.get('_type') in ['playlist', 'multi_video'] or bool(info.get('playlist_title') or info.get('album'))
+
+        if is_playlist and 'entries' in info:
+            track_urls = [entry.get('url') or f"https://www.youtube.com/watch?v={entry.get('id')}" for entry in info['entries']]
+            playlist_name = info.get('playlist_title') or info.get('title') or info.get('album') or 'Playlist'
+            target_dir = os.path.join(download_path, playlist_name)
+        else:
+            track_urls = [url]
+            target_dir = download_path
+
+        os.makedirs(target_dir, exist_ok=True)
+
+        if len(track_urls) > 1:
+            log_callback(f"Found playlist with {len(track_urls)} tracks.")
+
+        def download_single_track(track_url):
+            track_opts = {
+                "quiet": True,
+                "no_warnings": True,
+                "concurrent_fragment_downloads": 4,
+                "outtmpl": os.path.join(target_dir, '%(title)s [%(id)s].%(ext)s'),
+            }
+
+            if bundled_ffmpeg_dir and os.path.exists(bundled_ffmpeg_dir):
+                track_opts["ffmpeg_location"] = bundled_ffmpeg_dir
+
+            if audio_format:
+                track_opts["format"] = "bestaudio/best"
+                track_opts["embedmetadata"] = True
+                track_opts["postprocessors"] = [{
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": audio_format,
+                    "preferredquality": "192",
+                }]
+
+                if embed_cover:
+                    track_opts["writethumbnail"] = True
+                    track_opts["embedthumbnail"] = True
+                    track_opts["outtmpl"] = {
+                        "default": os.path.join(target_dir, '%(title)s [%(id)s].%(ext)s'),
+                        "thumbnail": os.path.join(target_dir, '%(title)s [%(id)s]')
+                    }
+                    track_opts["postprocessor_args"] = ["-id3v2_version", "3", "-write_id3v1", "1"]
+                    track_opts["postprocessors"].append({"key": "EmbedThumbnail"})
+            else:
+                track_opts["format"] = "bestvideo+bestaudio/best"
+                track_opts["merge_output_format"] = "mp4"
+
+            logged_files = set()
+
+            def ydl_hook(d):
+                if d['status'] == 'downloading':
+                    filename = os.path.basename(d.get('filename', 'file'))
+                    if filename not in logged_files:
+                        log_callback(f"Downloading: {filename}")
+                        logged_files.add(filename)
+                elif d['status'] == 'finished':
+                    log_callback(f"Finished: {os.path.basename(d.get('filename', 'file'))}")
+
+            track_opts["progress_hooks"] = [ydl_hook]
+
+            try:
+                with yt_dlp.YoutubeDL(track_opts) as ydl:
+                    ydl.download([track_url])
+            except Exception as e:
+                log_callback(f"Error downloading track: {e}")
+
+        max_workers = min(4, len(track_urls)) if track_urls else 1
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            executor.map(download_single_track, track_urls)
+
+        log_callback("\nMedia fetched successfully!")
+        log_callback(f"Saved to: {target_dir}")
+        return True
+
+    except Exception as e:
+        log_callback(f"\nAn error occurred: {e}")
+        return False
