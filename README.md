@@ -1,6 +1,7 @@
 # Fetch
 A simple python program for downloading media such as audio and video using yt-dlp.
 It has UI based on the Windows 95 operating system (super cool).
+It supports playlist downloads if you use the link to the playlist.
 
 
 # Why use this?
