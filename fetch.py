@@ -177,6 +177,10 @@ class MediaDownloaderApp:
         )
         self.download_btn.pack(fill="x", pady=(10, 8))
 
+        self.progress_label = tk.Label(
+            content_area, text="0%", bg=WIN95_BG, fg="black", bd=2, font=WIN95_FONT, anchor="center"
+        )
+
         self.status_box = tk.Text(
             content_area, height=9, bg=WIN95_WHITE, fg="black", bd=2,
             relief=tk.SUNKEN, font=("Courier New", 9), state="disabled"
@@ -278,6 +282,23 @@ class MediaDownloaderApp:
     def _reset_button_style(self):
         self.download_btn.config(text=WIN95_DEFAULT_BTN_TEXT, bg=WIN95_BG)
 
+    def set_progress(self, percent):
+        def _update():
+            clamped_percent = max(0, min(100, int(percent)))
+            self.progress_label.config(text=f"{clamped_percent}%")
+
+            if 0 < clamped_percent < 100:
+                if not self.progress_label.winfo_ismapped():
+                    self.progress_label.pack(fill="x", pady=(0, 8), before=self.status_box)
+            else:
+                if clamped_percent >= 100 and self.progress_label.winfo_ismapped():
+                    self.progress_label.pack_forget()
+            
+        if threading.current_thread() != threading.main_thread():
+            self.root.after(0, _update)
+        else:
+            _update()
+
     def start_download_thread(self):
         url = self.url_entry.get().strip()
         if not url:
@@ -286,6 +307,7 @@ class MediaDownloaderApp:
         self._update_button_style()
         self.url_entry.delete(0, tk.END)
         self.download_btn.config(state="disabled")
+        self.set_progress(0)
         
         self.status_box.config(state="normal")
         self.status_box.delete("1.0", tk.END)
@@ -294,7 +316,14 @@ class MediaDownloaderApp:
         format_choice = self.format_var.get()
         
         def background_task():
-            run_download(url, format_choice, self.download_path, self.log_status, resource_path)
+            run_download(
+                url, 
+                format_choice, 
+                self.download_path, 
+                self.log_status, 
+                resource_path, 
+                progress_callback=self.set_progress
+            )
             self.print_art_final()
             self.root.after(0, self._reset_button_style)
             self.root.after(0, lambda: self.download_btn.config(state="normal"))

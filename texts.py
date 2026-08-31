@@ -68,4 +68,7 @@ DOWNLOAD_TEXTS = [
     "Fetch fetches files...!",
     "Fetch is fetching files...!",
     "Good morning...! Good evening...! Good night...! Good whatever time it is for you...!",
+    "Bats are the only mammals capable of true, sustained flight...!",
+    "The leaf-nosed bat's nose is shaped like a leaf to help it echolocate...!",
+    "The sword-nosed bat has a tongue extending up to half its body length...!"
 ]

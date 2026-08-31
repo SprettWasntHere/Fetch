@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 import yt_dlp
 import time
 
-def run_download(url, format_choice, download_path, log_callback, resource_path_func):
+def run_download(url, format_choice, download_path, log_callback, resource_path_func, progress_callback = None):
     audio_format = "mp3" if "MP3" in format_choice else ("wav" if "WAV" in format_choice else None)
     embed_cover = "Cover" in format_choice
 
@@ -35,6 +35,8 @@ def run_download(url, format_choice, download_path, log_callback, resource_path_
             playlist_name = "Single"
 
         os.makedirs(target_dir, exist_ok=True)
+        total_tracks = len(track_urls)
+        completed_tracks = [0]
 
         if len(track_urls) > 1:
             log_callback(f"Found playlist with {len(track_urls)} tracks.")
@@ -66,7 +68,6 @@ def run_download(url, format_choice, download_path, log_callback, resource_path_
                     }
                 ]
                 
-                # Forcefully stamp the album tag via FFmpeg parameters
                 track_opts["postprocessor_args"] = [
                     "-metadata", f"album={fallback_album}"
                 ]
@@ -93,6 +94,16 @@ def run_download(url, format_choice, download_path, log_callback, resource_path_
                     if filename not in logged_files:
                         log_callback(f"[{timestamp}] Downloading: {filename}")
                         logged_files.add(filename)
+                    
+                    # Optional: calculate granular chunk progress if available
+                    total_bytes = d.get('total_bytes') or d.get('total_bytes_estimate')
+                    downloaded_bytes = d.get('downloaded_bytes', 0)
+                    if total_bytes and progress_callback:
+                        track_fraction = (downloaded_bytes / total_bytes) / total_tracks
+                        base_progress = (completed_tracks[0] / total_tracks) * 100
+                        current_progress = base_progress + (track_fraction * 100)
+                        progress_callback(current_progress)
+
                 elif d['status'] == 'finished':
                     log_callback(f"[{timestamp}] Finished processing: {os.path.basename(d.get('filename', 'file'))}")
 
@@ -101,12 +112,19 @@ def run_download(url, format_choice, download_path, log_callback, resource_path_
             try:
                 with yt_dlp.YoutubeDL(track_opts) as ydl:
                     ydl.download([track_url])
+                completed_tracks[0] += 1
+                if progress_callback:
+                    progress_callback((completed_tracks[0] / total_tracks) * 100)
             except Exception as e:
                 log_callback(f"Error downloading track: {e}")
+                completed_tracks[0] += 1 # Count failed ones too to finish progress
 
         max_workers = min(4, len(track_urls)) if track_urls else 1
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             executor.map(download_single_track, track_urls)
+
+        if progress_callback:
+            progress_callback(100)
 
         log_callback("\nMedia fetched successfully!")
         log_callback(f"Saved to: {target_dir}")
