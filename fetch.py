@@ -286,7 +286,6 @@ class MediaDownloaderApp:
     def start_download_thread(self):
         url = self.url_entry.get().strip()
         if not url:
-            # Simple popup inline or use a helper if needed
             return
 
         self._update_button_style()

@@ -2,6 +2,7 @@ import os
 import shutil
 from concurrent.futures import ThreadPoolExecutor
 import yt_dlp
+import time
 
 def run_download(url, format_choice, download_path, log_callback, resource_path_func):
     audio_format = "mp3" if "MP3" in format_choice else ("wav" if "WAV" in format_choice else None)
@@ -73,13 +74,14 @@ def run_download(url, format_choice, download_path, log_callback, resource_path_
             logged_files = set()
 
             def ydl_hook(d):
+                timestamp = time.strftime("%H:%M:%S")
                 if d['status'] == 'downloading':
                     filename = os.path.basename(d.get('filename', 'file'))
                     if filename not in logged_files:
-                        log_callback(f"Downloading: {filename}")
+                        log_callback(f"[{timestamp}] Downloading: {filename}")
                         logged_files.add(filename)
                 elif d['status'] == 'finished':
-                    log_callback(f"Finished: {os.path.basename(d.get('filename', 'file'))}")
+                    log_callback(f"[{timestamp}] Finished processing: {os.path.basename(d.get('filename', 'file'))}")
 
             track_opts["progress_hooks"] = [ydl_hook]
 
