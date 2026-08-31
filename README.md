@@ -1,12 +1,17 @@
 # Fetch
-A simple python program for downloading media such as audio and video without those stupid websites that constantly redirect you.
+A simple python program for downloading media such as audio and video using yt-dlp.
+It has UI based on the Windows 95 operating system (super cool).
+
+
+# Why use this?
+Some sites make downloading a video or audio paywalled (for some reason), and the websites that are made for downloading the videos or audio from these sites are really agressive with their ads.
+Fetch is an ad-free alternative to these sites, enjoy your free downloading.
+Also it supports file-embedded metadata, that's cool.
 
 
 # Supported sources
-- Youtube
-- Soundcloud
-- Spotify (Kinda. It only grabs the metadata and tries to download it from youtube.)
-
+- Anything with a media link (Youtube, Soundcloud, Tiktok, etc.)
+- Spotify (Kinda. It only grabs the metadata and tries to download it from youtube because spotify tracks are encrypted and hosted behind closed APIs.)
 
 
 # Build instructions
