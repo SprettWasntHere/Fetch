@@ -30,7 +30,7 @@ def resource_path(relative_path="."):
         base_path = os.path.abspath(".")
     
     if relative_path in ("icon.ico", "icon.png"):
-        relative_path = os.path.join("media", relative_path)
+        relative_path = os.path.join("assets", relative_path)
     
     return os.path.join(base_path, relative_path)
 
@@ -65,7 +65,7 @@ class MediaDownloaderApp:
         self.root.overrideredirect(True)
         self.root.configure(bg=WIN95_TEAL)
 
-        ico_path = resource_path("media/icon.ico")
+        ico_path = resource_path("assets/icon.ico")
         if os.path.exists(ico_path):
             try:
                 self.root.iconbitmap(ico_path)
@@ -94,8 +94,8 @@ class MediaDownloaderApp:
         self.title_bar = tk.Frame(self.outer_frame, bg=WIN95_NAVY, height=22)
         self.title_bar.pack(fill="x", side="top", padx=2, pady=2)
 
-        ico_path = resource_path("media/icon.ico")
-        png_path = resource_path("media/icon.png")
+        ico_path = resource_path("assets/icon.ico")
+        png_path = resource_path("assets/icon.png")
 
         if os.path.exists(png_path) or os.path.exists(ico_path):
             try:
@@ -158,7 +158,7 @@ class MediaDownloaderApp:
         self.combo_label.bind("<Button-1>", lambda e: self._toggle_instant_dropdown())
         self.combo_container.bind("<Button-1>", lambda e: self._toggle_instant_dropdown())
 
-        tk.Label(form_frame, text="Save Directory:", bg=WIN95_BG, font=WIN95_FONT).grid(row=2, column=0, sticky="w", pady=4)
+        tk.Label(form_frame, text="Download Directory:", bg=WIN95_BG, font=WIN95_FONT).grid(row=2, column=0, sticky="w", pady=4)
 
         self.dir_entry = tk.Entry(form_frame, bg=WIN95_BG, fg="black", bd=2, relief=tk.SUNKEN, font=WIN95_FONT)
         self.dir_entry.insert(0, self.download_path)
