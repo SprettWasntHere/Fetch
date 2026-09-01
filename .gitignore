@@ -27,3 +27,5 @@ Thumbs.db
 # Gluh
 *.psd
 *_old.py
+installer_output/
+*.iss
