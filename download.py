@@ -118,9 +118,31 @@ def run_download(url, format_choice, download_path, log_callback, resource_path_
                 log_callback(f"Error downloading track: {e}")
                 completed_tracks[0] += 1
 
-        max_workers = min(4, len(track_urls)) if track_urls else 1
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            executor.map(download_single_track, track_urls)
+        if total_tracks >= 100:
+            max_workers, batch_size, pause_duration = 1, 1, 0
+        else:
+            max_workers = min(4, total_tracks)
+            batch_size = 10 if total_tracks >= 20 else total_tracks
+            
+            if total_tracks >= 50:
+                pause_duration = 30
+            elif total_tracks >= 35:
+                pause_duration = 10
+            elif total_tracks >= 20:
+                pause_duration = 5
+            else:
+                pause_duration = 0
+
+        for i in range(0, len(track_urls), batch_size):
+            batch_urls = track_urls[i : i + batch_size]
+            
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                list(executor.map(download_single_track, batch_urls))
+            
+            if pause_duration > 0 and i + batch_size < len(track_urls):
+                timestamp = time.strftime("%H:%M:%S")
+                log_callback(f"[{timestamp}] Downloaded {batch_size} tracks. Pausing for {pause_duration} seconds to avoid rate-limiting...")
+                time.sleep(pause_duration)
 
         if progress_callback:
             progress_callback(100)

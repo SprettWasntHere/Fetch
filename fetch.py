@@ -148,6 +148,8 @@ class MediaDownloaderApp:
         )
         self.combo_label.pack(side="left", fill="x", expand=True, padx=(2, 0))
 
+#        self.rate_limit_pause = tk.
+
         self.combo_btn = tk.Button(
             self.combo_container, text="▼", bg=WIN95_BG, activebackground=WIN95_BG,
             font=("MS Sans Serif", 7), bd=1, relief=tk.RAISED, width=2, height=1,
