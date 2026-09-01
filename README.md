@@ -17,7 +17,6 @@ Also it supports file-embedded metadata, that's cool.
 
 # Build instructions
 1. Download the project zip or use git clone to download the repo.
-2. Open your terminal in the project directory.
-3. Make sure you have PyInstaller installed.
-4. Open your terminal in the folder mentioned above and run the following command: `python -m PyInstaller --onedir --noconsole --icon="media/icon.ico" --add-binary "bin/ffmpeg.exe;bin" --add-binary "bin/ffprobe.exe;bin" --add-data "media/icon.ico;media" --add-data "media/icon.png;media" fetch.py`
-5. Done
+2. Make sure you have PyInstaller installed.
+3. Run build.bat
+4. Done
