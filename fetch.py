@@ -11,6 +11,7 @@ from download import run_download
 from texts import DOWNLOAD_TEXTS
 
 APP_TITLE = "Fetch"
+APP_VERSION = "1.3.1"
 SIZE_X = 540
 SIZE_Y = 400
 
@@ -123,6 +124,12 @@ class MediaDownloaderApp:
             widget.bind("<ButtonPress-1>", self._start_move)
             widget.bind("<B1-Motion>", self._on_move)
 
+        version_frame = tk.Frame(self.outer_frame, bg=WIN95_BG, bd=1)
+        version_frame.pack(fill="x", side="bottom", padx=2, pady=(0, 2))
+
+        self.version_label = tk.Label(version_frame, text=f" v{APP_VERSION} ", bg=WIN95_BG, fg="black", font=("MS Sans Serif", 8), anchor="w")
+        self.version_label.pack(side="left")
+
         content_area = tk.Frame(self.outer_frame, bg=WIN95_BG)
         content_area.pack(fill="both", expand=True, padx=10, pady=10)
 
@@ -147,8 +154,6 @@ class MediaDownloaderApp:
             font=WIN95_FONT, anchor="w", width=18, cursor="arrow"
         )
         self.combo_label.pack(side="left", fill="x", expand=True, padx=(2, 0))
-
-#        self.rate_limit_pause = tk.
 
         self.combo_btn = tk.Button(
             self.combo_container, text="▼", bg=WIN95_BG, activebackground=WIN95_BG,
