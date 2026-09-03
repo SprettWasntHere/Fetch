@@ -30,7 +30,7 @@ def resource_path(relative_path="."):
     except AttributeError:
         base_path = os.path.abspath(".")
     
-    if relative_path in ("icon.ico", "icon.png"):
+    if relative_path in ("icon.ico", "icon.png", "art.txt"):
         relative_path = os.path.join("assets", relative_path)
     
     return os.path.join(base_path, relative_path)
@@ -283,8 +283,8 @@ class MediaDownloaderApp:
         self.status_box.config(state="disabled")
 
     def _update_button_style(self):
-        self.text_index = random.randint(0, len(DOWNLOAD_TEXTS) - 1)
-        self.download_btn.config(text=DOWNLOAD_TEXTS[self.text_index], bg=get_random_bright_color())
+        self.text_index = random.choice(DOWNLOAD_TEXTS)
+        self.download_btn.config(text=self.text_index, bg=get_random_bright_color())
 
     def _reset_button_style(self):
         self.download_btn.config(text=WIN95_DEFAULT_BTN_TEXT, bg=WIN95_BG)
@@ -338,15 +338,15 @@ class MediaDownloaderApp:
         threading.Thread(target=background_task, daemon=True).start()
 
     def print_art_final(self):
-        paw_print = [
-            "⠀⠀⠀⠀⣀⡀",
-            "⢠⣤⡀⣾⣿⣿⠀⣤⣤⡄",
-            "⢿⣿⡇⠘⠛⠁⢸⣿⣿⠃",
-            "⠈⣉⣤⣾⣿⣿⡆⠉⣴⣶⣶",
-            "⣾⣿⣿⣿⣿⣿⣿⡀⠻⠟⠃",
-            "⠙⠛⠻⢿⣿⣿⣿⡇",
-            "⠀⠀⠀⠀⠈⠙⠋⠁",
-        ]
+        art_path = resource_path("art.txt")
+
+        if not os.path.exists(art_path):
+            self.log_status("Art file not found.")
+            return
+        
+        with open(art_path, "r", encoding="utf-8") as f:
+            paw_print = f.read().splitlines()
+        
         self.log_status("")
         for line in paw_print:
             self.log_status(line)

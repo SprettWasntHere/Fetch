@@ -3,6 +3,11 @@ import shutil
 from concurrent.futures import ThreadPoolExecutor
 import yt_dlp
 import time
+import random
+from texts import COMPLETED_TEXTS
+
+def random_text():
+    return random.choice(COMPLETED_TEXTS)
 
 def run_download(url, format_choice, download_path, log_callback, resource_path_func, progress_callback = None):
     audio_format = "mp3" if "MP3" in format_choice else ("wav" if "WAV" in format_choice else None)
@@ -147,7 +152,7 @@ def run_download(url, format_choice, download_path, log_callback, resource_path_
         if progress_callback:
             progress_callback(100)
 
-        log_callback("\nMedia fetched successfully!")
+        log_callback(f"\n{random_text()}")
         log_callback(f"Saved to: {target_dir}")
         return True
 

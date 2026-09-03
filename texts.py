@@ -73,3 +73,11 @@ DOWNLOAD_TEXTS = [
     "You know, I think you're pretty cool.",
     "Never adding mac support."
 ]
+
+COMPLETED_TEXTS = [
+    "Fetched!",
+    "You're welcome!",
+    "All done!",
+    "Dudes be downloading anything...",
+    "Thanks for using Fetch!"
+]
