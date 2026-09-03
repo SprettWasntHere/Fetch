@@ -82,7 +82,7 @@ def run_download(url, format_choice, download_path, log_callback, resource_path_
                     track_opts["postprocessor_args"].extend(["-id3v2_version", "3", "-write_id3v1", "1"])
                     track_opts["postprocessors"].append({"key": "EmbedThumbnail"})
             else:
-                track_opts["format"] = "bestvideo+bestaudio/best"
+                track_opts["format"] = "bestvideo[vcodec^=avc1]+bestaudio/best[ext=mp4]/best"
                 track_opts["merge_output_format"] = "mp4"
 
             logged_files = set()
