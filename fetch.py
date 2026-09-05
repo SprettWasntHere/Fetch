@@ -12,7 +12,7 @@ from download import run_download
 from texts import DOWNLOAD_TEXTS
 
 APP_TITLE = "Fetch"
-APP_VERSION = "1.3.2"
+APP_VERSION = "1.4"
 SIZE_X = 540
 SIZE_Y = 440
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".fetch_presets.json")
