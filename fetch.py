@@ -4,6 +4,7 @@ import random
 import sys
 import threading
 import json
+import subprocess
 from time import sleep
 import tkinter as tk
 from tkinter import filedialog
@@ -12,7 +13,7 @@ from download import run_download
 from texts import DOWNLOAD_TEXTS
 
 APP_TITLE = "Fetch"
-APP_VERSION = "1.4"
+APP_VERSION = "1.4.1"
 SIZE_X = 540
 SIZE_Y = 440
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".fetch_presets.json")
@@ -118,6 +119,34 @@ def get_random_bright_color():
     max_brightness = 255
     return f"#{random.randint(min_brightness, max_brightness):02X}{random.randint(min_brightness, max_brightness):02X}{random.randint(min_brightness, max_brightness):02X}"
 
+def check_and_update_ytdlp(log_callback=None):
+    def log(msg):
+        if log_callback:
+            log_callback(msg)
+        else:
+            print(msg)
+
+    try:
+        import yt_dlp
+        log("Checking for yt-dlp updates...")
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", "--upgrade", "yt-dlp"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        log("yt-dlp is up to date.")
+    except (ImportError, subprocess.CalledProcessError):
+        log("yt-dlp not found or update failed. Installing yt-dlp...")
+        try:
+            subprocess.check_call(
+                [sys.executable, "-m", "pip", "install", "yt-dlp"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            log("yt-dlp successfully installed!")
+        except Exception as e:
+            log(f"Failed to install yt-dlp: {e}")
+
 class MediaDownloaderApp:
     def __init__(self):
         self.root = tk.Tk()
@@ -148,6 +177,8 @@ class MediaDownloaderApp:
         self._build_win95_ui()
         self._center_window(SIZE_X, SIZE_Y)
         fix_win95_taskbar(self.root)
+
+        threading.Thread(target=lambda: check_and_update_ytdlp(self.log_status), daemon=True).start()
 
     def _center_window(self, width, height):
         self.root.update_idletasks()
@@ -615,7 +646,7 @@ class MediaDownloaderApp:
         if threading.current_thread() != threading.main_thread():
             self.root.after(0, self._append_log, text)
         else:
-            self._append_log(text)
+            self.root.after(0, lambda: self._append_log(text))
 
     def _append_log(self, text):
         self.status_box.config(state="normal")
