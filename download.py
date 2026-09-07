@@ -1,15 +1,72 @@
 import os
 import shutil
+import sys
+import subprocess
 from concurrent.futures import ThreadPoolExecutor
-import yt_dlp
 import time
 import random
 from texts import COMPLETED_TEXTS
 
+# Track whether yt-dlp has already been checked/updated during this app session
+_YTDLP_CHECKED = False
+
 def random_text():
     return random.choice(COMPLETED_TEXTS)
 
+def update_ytdlp(log_callback):
+    """Safely checks and updates yt-dlp only once per application session."""
+    global _YTDLP_CHECKED
+
+    # If we already checked this session, just import and return yt_dlp immediately
+    if _YTDLP_CHECKED:
+        try:
+            import yt_dlp
+            return yt_dlp
+        except ImportError:
+            pass  # Fallback if something happened to the import
+
+    python_to_use = sys.executable
+    if getattr(sys, 'frozen', False):
+        python_to_use = shutil.which("python") or shutil.which("python3")
+
+    if python_to_use and not _YTDLP_CHECKED:
+        try:
+            log_callback("Checking for yt-dlp updates...")
+            subprocess.check_call(
+                [python_to_use, "-m", "pip", "install", "--upgrade", "yt-dlp"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+        except Exception:
+            pass  # Silently bypass if offline or pip isn't accessible
+
+    _YTDLP_CHECKED = True
+
+    try:
+        import yt_dlp
+        return yt_dlp
+    except ImportError:
+        log_callback("yt-dlp not found. Attempting to install...")
+        if python_to_use:
+            try:
+                subprocess.check_call(
+                    [python_to_use, "-m", "pip", "install", "yt-dlp"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
+                import yt_dlp
+                log_callback("yt-dlp successfully installed!")
+                return yt_dlp
+            except Exception as e:
+                log_callback(f"Failed to install yt-dlp: {e}")
+        return None
+
 def run_download(url, format_choice, download_path, log_callback, resource_path_func, progress_callback = None):
+    yt_dlp = update_ytdlp(log_callback)
+    if not yt_dlp:
+        log_callback("Error: yt-dlp is not available.")
+        return False
+
     audio_format = "mp3" if "MP3" in format_choice else ("wav" if "WAV" in format_choice else None)
     embed_cover = "Cover" in format_choice
 
