@@ -4,7 +4,6 @@ import random
 import sys
 import threading
 import json
-import subprocess
 from time import sleep
 import tkinter as tk
 from tkinter import filedialog
@@ -13,7 +12,7 @@ from download import run_download
 from texts import DOWNLOAD_TEXTS
 
 APP_TITLE = "Fetch"
-APP_VERSION = "1.4.1"
+APP_VERSION = "1.5.0"
 SIZE_X = 540
 SIZE_Y = 470
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".fetch_presets.json")

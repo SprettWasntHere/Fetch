@@ -7,23 +7,20 @@ import time
 import random
 from texts import COMPLETED_TEXTS
 
-# Track whether yt-dlp has already been checked/updated during this app session
 _YTDLP_CHECKED = False
 
 def random_text():
     return random.choice(COMPLETED_TEXTS)
 
 def update_ytdlp(log_callback):
-    """Safely checks and updates yt-dlp only once per application session."""
     global _YTDLP_CHECKED
 
-    # If we already checked this session, just import and return yt_dlp immediately
     if _YTDLP_CHECKED:
         try:
             import yt_dlp
             return yt_dlp
         except ImportError:
-            pass  # Fallback if something happened to the import
+            pass
 
     python_to_use = sys.executable
     if getattr(sys, 'frozen', False):
@@ -38,7 +35,7 @@ def update_ytdlp(log_callback):
                 stderr=subprocess.DEVNULL
             )
         except Exception:
-            pass  # Silently bypass if offline or pip isn't accessible
+            pass
 
     _YTDLP_CHECKED = True
 
