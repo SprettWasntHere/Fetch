@@ -15,7 +15,7 @@ from texts import DOWNLOAD_TEXTS
 APP_TITLE = "Fetch"
 APP_VERSION = "1.4.1"
 SIZE_X = 540
-SIZE_Y = 440
+SIZE_Y = 470
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".fetch_presets.json")
 
 def resource_path(relative_path="."):
@@ -114,11 +114,6 @@ def fix_win95_taskbar(root):
     except Exception:
         pass
 
-def get_random_bright_color():
-    min_brightness = 150
-    max_brightness = 255
-    return f"#{random.randint(min_brightness, max_brightness):02X}{random.randint(min_brightness, max_brightness):02X}{random.randint(min_brightness, max_brightness):02X}"
-
 class MediaDownloaderApp:
     def __init__(self):
         self.root = tk.Tk()
@@ -151,6 +146,9 @@ class MediaDownloaderApp:
         saved_format = self.config_data.get("selected_format", "Video (MP4)")
         self.format_var = tk.StringVar(value=saved_format)
 
+        saved_auto_paste = self.config_data.get("auto_paste", False)
+        self.auto_paste_var = tk.BooleanVar(value=saved_auto_paste)
+
         self.app_icon_img = None
         self.text_index = 0
         self.dropdown_popup = None
@@ -166,6 +164,25 @@ class MediaDownloaderApp:
         
         self._center_window(SIZE_X, SIZE_Y)
         fix_win95_taskbar(self.root)
+        self.root.bind("<FocusIn>", self._check_clipboard_url)
+        self.cancel_event = threading.Event()
+
+    def _on_auto_paste_toggle(self):
+        self.config_data["auto_paste"] = self.auto_paste_var.get()
+        save_config(self.config_data)
+
+    def _check_clipboard_url(self, event=None):
+        if event and event.widget != self.root:
+            return
+        if not self.auto_paste_var.get():
+            return
+        try:
+            clipboard_content = self.root.clipboard_get().strip()
+            if clipboard_content.startswith(("http://", "https://")) and not self.url_entry.get():
+                self.url_entry.insert(0, clipboard_content)
+                self.log_status(f"Auto-pasted URL from clipboard.")
+        except Exception:
+            pass
 
     def _center_window(self, width, height):
         self.root.update_idletasks()
@@ -239,10 +256,17 @@ class MediaDownloaderApp:
         self.url_entry.grid(row=0, column=1, columnspan=2, sticky="ew", padx=(8, 0), pady=4)
         self.url_entry.focus()
 
-        tk.Label(form_frame, text="Media Format:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=1, column=0, sticky="w", pady=4)
+        self.auto_paste_chk = tk.Checkbutton(
+            form_frame, text="Auto-paste link from clipboard", variable=self.auto_paste_var,
+            bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT,
+            selectcolor=WIN95_WHITE, font=WIN95_FONT, command=self._on_auto_paste_toggle
+        )
+        self.auto_paste_chk.grid(row=1, column=1, columnspan=2, sticky="w", padx=(6, 0), pady=(0, 4))
+
+        tk.Label(form_frame, text="Media Format:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=2, column=0, sticky="w", pady=4)
 
         self.combo_container = tk.Frame(form_frame, bg=WIN95_WHITE, bd=2, relief=tk.SUNKEN)
-        self.combo_container.grid(row=1, column=1, sticky="w", padx=(8, 0), pady=4)
+        self.combo_container.grid(row=2, column=1, sticky="w", padx=(8, 0), pady=4)
 
         self.combo_label = tk.Label(
             self.combo_container, textvariable=self.format_var, bg=WIN95_WHITE, fg=WIN95_TEXT,
@@ -260,21 +284,21 @@ class MediaDownloaderApp:
         self.combo_label.bind("<Button-1>", lambda e: self._toggle_instant_dropdown())
         self.combo_container.bind("<Button-1>", lambda e: self._toggle_instant_dropdown())
 
-        tk.Label(form_frame, text="Download Directory:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=2, column=0, sticky="w", pady=4)
+        tk.Label(form_frame, text="Download Directory:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=3, column=0, sticky="w", pady=4)
 
         self.dir_entry = tk.Entry(form_frame, bg=WIN95_WHITE, readonlybackground=WIN95_WHITE, fg=WIN95_TEXT, bd=2, relief=tk.SUNKEN, font=WIN95_FONT)
         self.dir_entry.insert(0, self.download_path)
         self.dir_entry.config(state="readonly")
-        self.dir_entry.grid(row=2, column=1, sticky="ew", padx=(8, 4), pady=4)
+        self.dir_entry.grid(row=3, column=1, sticky="ew", padx=(8, 4), pady=4)
 
         browse_btn = tk.Button(form_frame, text="Browse...", bg=WIN95_BG, fg=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, command=self.browse_folder)
-        browse_btn.grid(row=2, column=2, sticky="e", pady=4)
+        browse_btn.grid(row=3, column=2, sticky="e", pady=4)
 
-        tk.Label(form_frame, text="Presets:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=3, column=0, sticky="w", pady=4)
+        tk.Label(form_frame, text="Presets:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=4, column=0, sticky="w", pady=4)
 
         self.preset_var = tk.StringVar(value="Presets")
         self.preset_container = tk.Frame(form_frame, bg=WIN95_WHITE, bd=2, relief=tk.SUNKEN)
-        self.preset_container.grid(row=3, column=1, sticky="w", padx=(8, 4), pady=4)
+        self.preset_container.grid(row=4, column=1, sticky="w", padx=(8, 4), pady=4)
 
         self.preset_label = tk.Label(
             self.preset_container, textvariable=self.preset_var, bg=WIN95_WHITE, fg=WIN95_TEXT,
@@ -293,7 +317,7 @@ class MediaDownloaderApp:
         self.preset_container.bind("<Button-1>", lambda e: self._toggle_preset_dropdown())
 
         preset_btn_frame = tk.Frame(form_frame, bg=WIN95_BG)
-        preset_btn_frame.grid(row=3, column=2, sticky="e", pady=4)
+        preset_btn_frame.grid(row=4, column=2, sticky="e", pady=4)
 
         save_preset_btn = tk.Button(preset_btn_frame, text="Save", bg=WIN95_BG, fg=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=5, command=self.save_current_as_preset)
         save_preset_btn.pack(side="left", padx=(0, 2))
@@ -369,7 +393,8 @@ class MediaDownloaderApp:
                 self.config_data["selected_theme"] = selected_theme_name
                 save_config(self.config_data)
                 
-                self.log_status(f"Theme set to '{selected_theme_name}'. Restart to apply.")
+                self.apply_theme(selected_theme_name)
+#                self.log_status(f"Using '{selected_theme_name}' theme.")
 
             if self.theme_popup:
                 self.theme_popup.destroy()
@@ -379,6 +404,66 @@ class MediaDownloaderApp:
         listbox.bind("<Return>", on_select)
         self.theme_popup.bind("<FocusOut>", lambda e: self._close_theme_delay())
         listbox.focus_set()
+
+    def apply_theme(self, theme_name):
+        global THEME, WIN95_BG, WIN95_TEAL, WIN95_NAVY, WIN95_WHITE, WIN95_TEXT, WIN95_DISABLED, WIN95_TITLE_TEXT
+        
+        if theme_name in AVAILABLE_THEMES:
+            THEME = AVAILABLE_THEMES[theme_name]
+        else:
+            THEME = DEFAULT_THEME
+
+        WIN95_BG = THEME["WIN95_BG"]
+        WIN95_TEAL = THEME["WIN95_TEAL"]
+        WIN95_NAVY = THEME["WIN95_NAVY"]
+        WIN95_WHITE = THEME["WIN95_WHITE"]
+        WIN95_TEXT = THEME["WIN95_TEXT"]
+        WIN95_DISABLED = THEME["WIN95_DISABLED"]
+        WIN95_TITLE_TEXT = THEME.get("WIN95_TITLE_TEXT", "#FFFFFF")
+
+        self.root.configure(bg=WIN95_TEAL)
+
+        def update_widget_colors(widget):
+            w_type = widget.winfo_class()
+            try:
+                if w_type in ("Frame", "Toplevel"):
+                    widget.configure(bg=WIN95_BG)
+                elif w_type == "Label":
+                    if widget == self.title_label or widget.master == self.title_bar:
+                        widget.configure(bg=WIN95_NAVY, fg=WIN95_TITLE_TEXT)
+                    else:
+                        widget.configure(bg=WIN95_BG, fg=WIN95_TEXT)
+                elif w_type == "Button":
+                    if widget == self.close_btn:
+                        widget.configure(bg=WIN95_BG, fg=WIN95_TEXT)
+                    elif widget == self.combo_btn or widget == self.preset_btn:
+                        widget.configure(bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG)
+                    else:
+                        widget.configure(bg=WIN95_BG, fg=WIN95_TEXT)
+                elif w_type == "Entry":
+                    widget.configure(bg=WIN95_WHITE, fg=WIN95_TEXT, readonlybackground=WIN95_WHITE)
+                elif w_type == "Text":
+                    widget.configure(bg=WIN95_WHITE, fg=WIN95_TEXT)
+                elif w_type == "Listbox":
+                    widget.configure(bg=WIN95_WHITE, fg=WIN95_TEXT, selectbackground=WIN95_NAVY, selectforeground=WIN95_TEXT)
+                elif w_type == "Checkbutton":
+                    widget.configure(bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, selectcolor=WIN95_WHITE)
+            except Exception:
+                pass
+
+            for child in widget.winfo_children():
+                update_widget_colors(child)
+
+        update_widget_colors(self.root)
+        
+        self.outer_frame.configure(bg=WIN95_BG)
+        self.title_bar.configure(bg=WIN95_NAVY)
+        self.title_label.configure(bg=WIN95_NAVY, fg=WIN95_TITLE_TEXT)
+        self.combo_container.configure(bg=WIN95_WHITE)
+        self.combo_label.configure(bg=WIN95_WHITE, fg=WIN95_TEXT)
+        self.preset_container.configure(bg=WIN95_WHITE)
+        self.preset_label.configure(bg=WIN95_WHITE, fg=WIN95_TEXT)
+        self.auto_paste_chk.configure(bg=WIN95_BG, fg=WIN95_TEXT, selectcolor=WIN95_WHITE)
 
     def _close_theme_delay(self):
         if self.theme_popup:
@@ -660,21 +745,19 @@ class MediaDownloaderApp:
         self.download_btn.config(text=WIN95_DEFAULT_BTN_TEXT, bg=WIN95_BG)
 
     def set_progress(self, percent):
-        def _update():
-            clamped_percent = max(0, min(100, int(percent)))
-            self.progress_label.config(text=f"{clamped_percent}%")
-
-            if 0 < clamped_percent < 100:
-                if not self.progress_label.winfo_ismapped():
-                    self.progress_label.pack(fill="x", pady=(0, 8), before=self.status_box)
-            else:
-                if clamped_percent >= 100 and self.progress_label.winfo_ismapped():
-                    self.progress_label.pack_forget()
-            
         if threading.current_thread() != threading.main_thread():
-            self.root.after(0, _update)
+            self.root.after(0, lambda: self.set_progress(percent))
+            return
+
+        clamped_percent = max(0, min(100, int(percent)))
+        self.progress_label.config(text=f"{clamped_percent}%")
+
+        if 0 < clamped_percent < 100:
+            if not self.progress_label.winfo_ismapped():
+                self.progress_label.pack(fill="x", pady=(0, 8), before=self.status_box)
         else:
-            _update()
+            if clamped_percent >= 100 and self.progress_label.winfo_ismapped():
+                self.progress_label.pack_forget()
 
     def start_download_thread(self):
         url = self.url_entry.get().strip()
