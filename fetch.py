@@ -78,7 +78,7 @@ def save_config(config_data):
 
 def load_theme():
     config = load_config()
-    saved_theme_name = config.get("selected_theme", "Classic Windows 95")
+    saved_theme_name = config.get("selected_theme", "Windows 95")
     if saved_theme_name in AVAILABLE_THEMES:
         return AVAILABLE_THEMES[saved_theme_name]
     return DEFAULT_THEME
@@ -139,7 +139,18 @@ class MediaDownloaderApp:
         if not self.presets:
             self.presets = {"Downloads Folder": default_dl}
 
-        self.download_path = default_dl
+        saved_preset_name = self.config_data.get("selected_preset", "Presets")
+        
+        if saved_preset_name in self.presets:
+            self.download_path = self.presets[saved_preset_name]
+            initial_preset_display = saved_preset_name
+        else:
+            self.download_path = default_dl
+            initial_preset_display = "Presets"
+
+        saved_format = self.config_data.get("selected_format", "Video (MP4)")
+        self.format_var = tk.StringVar(value=saved_format)
+
         self.app_icon_img = None
         self.text_index = 0
         self.dropdown_popup = None
@@ -147,6 +158,12 @@ class MediaDownloaderApp:
         self.theme_popup = None
 
         self._build_win95_ui()
+        self.preset_var.set(initial_preset_display)
+        self.dir_entry.config(state="normal")
+        self.dir_entry.delete(0, tk.END)
+        self.dir_entry.insert(0, self.download_path)
+        self.dir_entry.config(state="readonly")
+        
         self._center_window(SIZE_X, SIZE_Y)
         fix_win95_taskbar(self.root)
 
@@ -198,7 +215,7 @@ class MediaDownloaderApp:
         self.version_label = tk.Label(version_frame, text=f" v{APP_VERSION} ", bg=WIN95_BG, fg=WIN95_TEXT, font=("MS Sans Serif", 8), anchor="w")
         self.version_label.pack(side="left")
 
-        current_theme_name = self.config_data.get("selected_theme", "Classic Windows 95")
+        current_theme_name = self.config_data.get("selected_theme", "Windows 95")
         self.theme_var = tk.StringVar(value=current_theme_name)
         
         theme_btn = tk.Button(
@@ -223,8 +240,6 @@ class MediaDownloaderApp:
         self.url_entry.focus()
 
         tk.Label(form_frame, text="Media Format:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=1, column=0, sticky="w", pady=4)
-
-        self.format_var = tk.StringVar(value="Video (MP4)")
 
         self.combo_container = tk.Frame(form_frame, bg=WIN95_WHITE, bd=2, relief=tk.SUNKEN)
         self.combo_container.grid(row=1, column=1, sticky="w", padx=(8, 0), pady=4)
@@ -254,6 +269,8 @@ class MediaDownloaderApp:
 
         browse_btn = tk.Button(form_frame, text="Browse...", bg=WIN95_BG, fg=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, command=self.browse_folder)
         browse_btn.grid(row=2, column=2, sticky="e", pady=4)
+
+        tk.Label(form_frame, text="Presets:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=3, column=0, sticky="w", pady=4)
 
         self.preset_var = tk.StringVar(value="Presets")
         self.preset_container = tk.Frame(form_frame, bg=WIN95_WHITE, bd=2, relief=tk.SUNKEN)
@@ -330,7 +347,7 @@ class MediaDownloaderApp:
 
         listbox = tk.Listbox(
             popup_frame, bg=WIN95_WHITE, fg=WIN95_TEXT, selectbackground=WIN95_NAVY,
-            selectforeground=WIN95_WHITE, font=WIN95_FONT, bd=0, highlightthickness=0, activestyle="none"
+            selectforeground=WIN95_TEXT, font=WIN95_FONT, bd=0, highlightthickness=0, activestyle="none"
         )
         listbox.pack(fill="both", expand=True)
 
@@ -392,7 +409,7 @@ class MediaDownloaderApp:
 
         listbox = tk.Listbox(
             popup_frame, bg=WIN95_WHITE, fg=WIN95_TEXT, selectbackground=WIN95_NAVY,
-            selectforeground=WIN95_WHITE, font=WIN95_FONT, bd=0, highlightthickness=0, activestyle="none"
+            selectforeground=WIN95_TEXT, font=WIN95_FONT, bd=0, highlightthickness=0, activestyle="none"
         )
         listbox.pack(fill="both", expand=True)
 
@@ -408,7 +425,12 @@ class MediaDownloaderApp:
         def on_select(evt=None):
             sel = listbox.curselection()
             if sel:
-                self.format_var.set(options[sel[0]])
+                selected_format = options[sel[0]]
+                self.format_var.set(selected_format)
+                
+                self.config_data["selected_format"] = selected_format
+                save_config(self.config_data)
+                
             if self.dropdown_popup:
                 self.dropdown_popup.destroy()
                 self.dropdown_popup = None
@@ -447,8 +469,12 @@ class MediaDownloaderApp:
             self.dir_entry.config(state="readonly")
             self.preset_var.set("Presets")
 
+            self.config_data["selected_preset"] = "Presets"
+            save_config(self.config_data)
+
     def save_presets(self):
         self.config_data["presets"] = self.presets
+        self.config_data["selected_preset"] = self.preset_var.get()
         save_config(self.config_data)
 
     def _toggle_preset_dropdown(self):
@@ -481,7 +507,7 @@ class MediaDownloaderApp:
 
         listbox = tk.Listbox(
             popup_frame, bg=WIN95_WHITE, fg=WIN95_TEXT, selectbackground=WIN95_NAVY,
-            selectforeground=WIN95_WHITE, font=WIN95_FONT, bd=0, highlightthickness=0, activestyle="none"
+            selectforeground=WIN95_TEXT, font=WIN95_FONT, bd=0, highlightthickness=0, activestyle="none"
         )
         listbox.pack(fill="both", expand=True)
 
@@ -503,6 +529,8 @@ class MediaDownloaderApp:
                         self.dir_entry.delete(0, tk.END)
                         self.dir_entry.insert(0, self.download_path)
                         self.dir_entry.config(state="readonly")
+
+                        self.save_presets()
 
             if self.preset_popup:
                 self.preset_popup.destroy()
@@ -626,7 +654,7 @@ class MediaDownloaderApp:
 
     def _update_button_style(self):
         self.text_index = random.choice(DOWNLOAD_TEXTS)
-        self.download_btn.config(text=self.text_index, bg=get_random_bright_color())
+        self.download_btn.config(text=self.text_index, bg=WIN95_BG, fg=WIN95_TEXT, disabledforeground=WIN95_TEXT)
 
     def _reset_button_style(self):
         self.download_btn.config(text=WIN95_DEFAULT_BTN_TEXT, bg=WIN95_BG)
