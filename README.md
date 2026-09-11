@@ -7,7 +7,6 @@ It supports playlist downloads if you use the link to the playlist.
 # Why use this?
 Some sites make downloading a video or audio paywalled (for some reason), and the websites that are made for downloading the videos or audio from these sites are really agressive with their ads.
 Fetch is an ad-free alternative to these sites, enjoy your free downloading.
-Also it supports file-embedded metadata, that's cool.
 
 
 # Supported sources
