@@ -173,18 +173,18 @@ class MediaDownloaderApp:
 
     def _check_app_updates_background(self):
         try:
-            self.log_status("Checking for app updates...")
+            self.log_status("Checking for Fetch updates...")
             new_ver, download_url, asset_name = check_for_updates(
                 APP_VERSION, GITHUB_OWNER, GITHUB_REPO
             )
             if new_ver:
                 self.log_status(
-                    f"New version {new_ver} found! Downloading update..."
+                    f"New Fetch version {new_ver} found! Downloading update..."
                 )
                 download_and_execute_update(download_url, asset_name)
 
             else:
-                self.log_status("Application is up to date.")
+                self.log_status("Fetch is up to date!")
 
         except Exception as e:
             self.log_status(f"Auto-update check failed: {e}")
