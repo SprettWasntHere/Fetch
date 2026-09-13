@@ -10,9 +10,10 @@ from tkinter import filedialog
 
 from download import run_download
 from texts import DOWNLOAD_TEXTS
+from autoupdater import *
 
 APP_TITLE = "Fetch"
-APP_VERSION = "1.5.0"
+APP_VERSION = "1.5.1"
 SIZE_X = 540
 SIZE_Y = 470
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".fetch_presets.json")
@@ -165,6 +166,28 @@ class MediaDownloaderApp:
         fix_win95_taskbar(self.root)
         self.root.bind("<FocusIn>", self._check_clipboard_url)
         self.cancel_event = threading.Event()
+
+        threading.Thread(
+            target=self._check_app_updates_background, daemon=True
+        ).start()
+
+    def _check_app_updates_background(self):
+        try:
+            self.log_status("Checking for app updates...")
+            new_ver, download_url, asset_name = check_for_updates(
+                APP_VERSION, GITHUB_OWNER, GITHUB_REPO
+            )
+            if new_ver:
+                self.log_status(
+                    f"New version {new_ver} found! Downloading update..."
+                )
+                download_and_execute_update(download_url, asset_name)
+
+            else:
+                self.log_status("Application is up to date.")
+
+        except Exception as e:
+            self.log_status(f"Auto-update check failed: {e}")
 
     def _on_auto_paste_toggle(self):
         self.config_data["auto_paste"] = self.auto_paste_var.get()
