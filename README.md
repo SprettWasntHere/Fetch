@@ -10,7 +10,7 @@ Fetch is an ad-free alternative to these sites, enjoy your free downloading.
 
 
 # Supported sources
-- Anything currently supported by yt-dlp (`https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md`)
+- Anything currently supported by yt-dlp (https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md)
 
 
 # Build instructions
