@@ -39,7 +39,9 @@ DEFAULT_THEME = {
     "WIN95_WHITE": "#FFFFFF",
     "WIN95_TEXT": "#000000",
     "WIN95_DISABLED": "#000000",
-    "WIN95_TITLE_TEXT": "#FFFFFF"
+    "WIN95_TITLE_TEXT": "#FFFFFF",
+    "WIN95_ACTIVE_FG": "#FFFFFF",
+    "WIN95_ACTIVE_BG": "#000080"
 }
 
 def load_available_themes():
@@ -92,6 +94,8 @@ WIN95_WHITE = THEME["WIN95_WHITE"]
 WIN95_TEXT = THEME["WIN95_TEXT"]
 WIN95_DISABLED = THEME["WIN95_DISABLED"]
 WIN95_TITLE_TEXT = THEME.get("WIN95_TITLE_TEXT", "#FFFFFF")
+WIN95_ACTIVE_FG = THEME.get("WIN95_ACTIVE_FG", "#FFFFFF")
+WIN95_ACTIVE_BG = THEME.get("WIN95_ACTIVE_BG", "#000080")
 
 WIN95_FONT = ("MS Sans Serif", 9)
 WIN95_FONT_BOLD = ("MS Sans Serif", 9, "bold")
@@ -239,7 +243,7 @@ class MediaDownloaderApp:
         self.title_label.pack(side="left", padx=2)
 
         self.close_btn = tk.Button(
-            self.title_bar, text="✕", bg=WIN95_BG, fg=WIN95_TEXT, font=("MS Sans Serif", 7, "bold"),
+            self.title_bar, text="✕", bg=WIN95_BG, fg=WIN95_TEXT, font=("MS Sans Serif", 7, "bold"), activebackground=WIN95_BG, activeforeground=WIN95_TEXT,
             bd=1, relief=tk.RAISED, width=2, height=1, command=self.close_app
         )
         self.close_btn.pack(side="right", padx=2, pady=2)
@@ -258,7 +262,7 @@ class MediaDownloaderApp:
         self.theme_var = tk.StringVar(value=current_theme_name)
         
         theme_btn = tk.Button(
-            version_frame, textvariable=self.theme_var, bg=WIN95_BG, fg=WIN95_TEXT,
+            version_frame, textvariable=self.theme_var, bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT,
             bd=1, relief=tk.RAISED, font=("MS Sans Serif", 7), command=self._toggle_theme_dropdown
         )
         theme_btn.pack(side="right", padx=2)
@@ -297,7 +301,7 @@ class MediaDownloaderApp:
         self.combo_label.pack(side="left", fill="x", expand=True, padx=(2, 0))
 
         self.combo_btn = tk.Button(
-            self.combo_container, text="▼", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG,
+            self.combo_container, text="▼", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT,
             font=("MS Sans Serif", 7), bd=1, relief=tk.RAISED, width=2, height=1,
             command=self._toggle_instant_dropdown
         )
@@ -313,7 +317,7 @@ class MediaDownloaderApp:
         self.dir_entry.config(state="readonly")
         self.dir_entry.grid(row=3, column=1, sticky="ew", padx=(8, 4), pady=4)
 
-        browse_btn = tk.Button(form_frame, text="Browse...", bg=WIN95_BG, fg=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, command=self.browse_folder)
+        browse_btn = tk.Button(form_frame, text="Browse...", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, command=self.browse_folder)
         browse_btn.grid(row=3, column=2, sticky="e", pady=4)
 
         tk.Label(form_frame, text="Presets:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=4, column=0, sticky="w", pady=4)
@@ -329,7 +333,7 @@ class MediaDownloaderApp:
         self.preset_label.pack(side="left", fill="x", expand=True, padx=(2, 0))
 
         self.preset_btn = tk.Button(
-            self.preset_container, text="▼", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG,
+            self.preset_container, text="▼", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT,
             font=("MS Sans Serif", 7), bd=1, relief=tk.RAISED, width=2, height=1,
             command=self._toggle_preset_dropdown
         )
@@ -341,17 +345,17 @@ class MediaDownloaderApp:
         preset_btn_frame = tk.Frame(form_frame, bg=WIN95_BG)
         preset_btn_frame.grid(row=4, column=2, sticky="e", pady=4)
 
-        save_preset_btn = tk.Button(preset_btn_frame, text="Save", bg=WIN95_BG, fg=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=5, command=self.save_current_as_preset)
+        save_preset_btn = tk.Button(preset_btn_frame, text="Save", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=5, command=self.save_current_as_preset)
         save_preset_btn.pack(side="left", padx=(0, 2))
 
-        delete_preset_btn = tk.Button(preset_btn_frame, text="Delete", bg=WIN95_BG, fg=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=5, command=self.delete_current_preset)
+        delete_preset_btn = tk.Button(preset_btn_frame, text="Delete", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=5, command=self.delete_current_preset)
         delete_preset_btn.pack(side="left")
         
         form_frame.columnconfigure(1, weight=1)
 
         self.download_btn = tk.Button(
             content_area, text=WIN95_DEFAULT_BTN_TEXT, bg=WIN95_BG, fg=WIN95_TEXT,
-            disabledforeground=WIN95_DISABLED, bd=2, relief=tk.RAISED, font=WIN95_FONT_BOLD,
+            disabledforeground=WIN95_DISABLED, bd=2, relief=tk.RAISED, font=WIN95_FONT_BOLD, activebackground=WIN95_BG, activeforeground=WIN95_TEXT,
             pady=3, command=self.start_download_thread
         )
         self.download_btn.pack(fill="x", pady=(10, 8))
@@ -392,8 +396,8 @@ class MediaDownloaderApp:
         popup_frame.pack(fill="both", expand=True)
 
         listbox = tk.Listbox(
-            popup_frame, bg=WIN95_WHITE, fg=WIN95_TEXT, selectbackground=WIN95_NAVY,
-            selectforeground=WIN95_TEXT, font=WIN95_FONT, bd=0, highlightthickness=0, activestyle="none"
+            popup_frame, bg=WIN95_WHITE, fg=WIN95_TEXT, selectbackground=WIN95_ACTIVE_BG,
+            selectforeground=WIN95_ACTIVE_FG, font=WIN95_FONT, bd=0, highlightthickness=0, activestyle="none"
         )
         listbox.pack(fill="both", expand=True)
 
@@ -428,7 +432,7 @@ class MediaDownloaderApp:
         listbox.focus_set()
 
     def apply_theme(self, theme_name):
-        global THEME, WIN95_BG, WIN95_TEAL, WIN95_NAVY, WIN95_WHITE, WIN95_TEXT, WIN95_DISABLED, WIN95_TITLE_TEXT
+        global THEME, WIN95_BG, WIN95_TEAL, WIN95_NAVY, WIN95_WHITE, WIN95_TEXT, WIN95_DISABLED, WIN95_TITLE_TEXT, WIN95_ACTIVE_FG, WIN95_ACTIVE_BG
         
         if theme_name in AVAILABLE_THEMES:
             THEME = AVAILABLE_THEMES[theme_name]
@@ -441,7 +445,9 @@ class MediaDownloaderApp:
         WIN95_WHITE = THEME["WIN95_WHITE"]
         WIN95_TEXT = THEME["WIN95_TEXT"]
         WIN95_DISABLED = THEME["WIN95_DISABLED"]
-        WIN95_TITLE_TEXT = THEME.get("WIN95_TITLE_TEXT", "#FFFFFF")
+        WIN95_TITLE_TEXT = THEME["WIN95_TITLE_TEXT"]
+        WIN95_ACTIVE_FG = THEME["WIN95_ACTIVE_FG"]
+        WIN95_ACTIVE_BG = THEME["WIN95_ACTIVE_BG"]
 
         self.root.configure(bg=WIN95_TEAL)
 
@@ -457,11 +463,11 @@ class MediaDownloaderApp:
                         widget.configure(bg=WIN95_BG, fg=WIN95_TEXT)
                 elif w_type == "Button":
                     if widget == self.close_btn:
-                        widget.configure(bg=WIN95_BG, fg=WIN95_TEXT)
+                        widget.configure(bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT)
                     elif widget == self.combo_btn or widget == self.preset_btn:
-                        widget.configure(bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG)
+                        widget.configure(bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT)
                     else:
-                        widget.configure(bg=WIN95_BG, fg=WIN95_TEXT)
+                        widget.configure(bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT)
                 elif w_type == "Entry":
                     widget.configure(bg=WIN95_WHITE, fg=WIN95_TEXT, readonlybackground=WIN95_WHITE)
                 elif w_type == "Text":
@@ -515,8 +521,8 @@ class MediaDownloaderApp:
         popup_frame.pack(fill="both", expand=True)
 
         listbox = tk.Listbox(
-            popup_frame, bg=WIN95_WHITE, fg=WIN95_TEXT, selectbackground=WIN95_NAVY,
-            selectforeground=WIN95_TEXT, font=WIN95_FONT, bd=0, highlightthickness=0, activestyle="none"
+            popup_frame, bg=WIN95_WHITE, fg=WIN95_TEXT, selectbackground=WIN95_ACTIVE_BG,
+            selectforeground=WIN95_ACTIVE_FG, font=WIN95_FONT, bd=0, highlightthickness=0, activestyle="none"
         )
         listbox.pack(fill="both", expand=True)
 
@@ -613,8 +619,8 @@ class MediaDownloaderApp:
         popup_frame.pack(fill="both", expand=True)
 
         listbox = tk.Listbox(
-            popup_frame, bg=WIN95_WHITE, fg=WIN95_TEXT, selectbackground=WIN95_NAVY,
-            selectforeground=WIN95_TEXT, font=WIN95_FONT, bd=0, highlightthickness=0, activestyle="none"
+            popup_frame, bg=WIN95_WHITE, fg=WIN95_TEXT, selectbackground=WIN95_ACTIVE_BG,
+            selectforeground=WIN95_ACTIVE_FG, font=WIN95_FONT, bd=0, highlightthickness=0, activestyle="none"
         )
         listbox.pack(fill="both", expand=True)
 
@@ -683,7 +689,7 @@ class MediaDownloaderApp:
             dialog.destroy()
 
         close_btn = tk.Button(
-            title_bar, text="✕", bg=WIN95_BG, fg=WIN95_TEXT, font=("MS Sans Serif", 7, "bold"),
+            title_bar, text="✕", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, font=("MS Sans Serif", 7, "bold"),
             bd=1, relief=tk.RAISED, width=2, height=1, command=lambda: close_dialog(None)
         )
         close_btn.pack(side="right", padx=2, pady=2)
@@ -705,10 +711,10 @@ class MediaDownloaderApp:
             if val:
                 close_dialog(val)
 
-        ok_btn = tk.Button(btn_box, text="OK", bg=WIN95_BG, fg=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=8, command=on_ok)
+        ok_btn = tk.Button(btn_box, text="OK", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=8, command=on_ok)
         ok_btn.pack(side="right", padx=(4, 0))
 
-        cancel_btn = tk.Button(btn_box, text="Cancel", bg=WIN95_BG, fg=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=8, command=lambda: close_dialog(None))
+        cancel_btn = tk.Button(btn_box, text="Cancel", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=8, command=lambda: close_dialog(None))
         cancel_btn.pack(side="right")
 
         entry.bind("<Return>", on_ok)

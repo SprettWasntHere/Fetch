@@ -2,8 +2,10 @@
     "WIN95_BG": "#5796ba",
     "WIN95_TEAL": "#3c64b5",
     "WIN95_NAVY": "#0066a1",
-    "WIN95_WHITE": "#6399b8",
+    "WIN95_WHITE": "#5389af",
     "WIN95_TEXT": "#FFFFFF",
     "WIN95_DISABLED": "#586E75",
-    "WIN95_TITLE_TEXT": "#bfe8ff"
+    "WIN95_TITLE_TEXT": "#bfe8ff",
+    "WIN95_ACTIVE_FG": "#FFFFFF",
+    "WIN95_ACTIVE_BG": "#0066a1"
 }

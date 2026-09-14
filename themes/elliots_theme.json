@@ -5,5 +5,7 @@
   "WIN95_WHITE": "#59536b",
   "WIN95_TEXT": "#e8e6f0",
   "WIN95_DISABLED": "#2b2933",
-  "WIN95_TITLE_TEXT": "#b885ff"
+  "WIN95_TITLE_TEXT": "#b885ff",
+  "WIN95_ACTIVE_FG": "#e8e6f0",
+  "WIN95_ACTIVE_BG": "#423c54"
 }
