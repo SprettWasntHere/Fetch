@@ -13,7 +13,7 @@ from texts import DOWNLOAD_TEXTS
 from autoupdater import *
 
 APP_TITLE = "Fetch"
-APP_VERSION = "1.5.1"
+APP_VERSION = "1.5.2"
 SIZE_X = 540
 SIZE_Y = 470
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".fetch_presets.json")
