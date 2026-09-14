@@ -10,8 +10,7 @@ Fetch is an ad-free alternative to these sites, enjoy your free downloading.
 
 
 # Supported sources
-- Anything with a media link (Youtube, Soundcloud, Tiktok, etc.)
-- Spotify (Kinda. It only grabs the metadata and tries to download it from youtube because spotify tracks are encrypted and hosted behind closed APIs.)
+- Anything currently supported by yt-dlp (https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md)
 
 
 # Build instructions
