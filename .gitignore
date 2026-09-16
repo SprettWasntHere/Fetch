@@ -24,9 +24,15 @@ Thumbs.db
 # Logs
 *.log
 
-# Gluh
-*.psd
-*_old.py
+
+# v PROJECT SPECIFIC v
+
+# InnoSetup
 installer_output/
+installer.iss
 *.iss
+
+# Other stuff
+IGNOOOOORE/
+*_old.py
 check-ytdlp.py
