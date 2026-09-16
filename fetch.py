@@ -1,9 +1,6 @@
-import ctypes
 import os
 import random
-import sys
 import threading
-import json
 from time import sleep
 import tkinter as tk
 from tkinter import filedialog
@@ -11,117 +8,12 @@ from tkinter import filedialog
 from download import run_download
 from texts import DOWNLOAD_TEXTS
 from autoupdater import *
-
-APP_TITLE = "Fetch"
-APP_VERSION = "1.5.3"
-SIZE_X = 540
-SIZE_Y = 470
-CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".fetch_presets.json")
-
-def resource_path(relative_path="."):
-    try:
-        base_path = sys._MEIPASS
-    except AttributeError:
-        base_path = os.path.abspath(".")
-    
-    if relative_path.startswith("./"):
-        relative_path = relative_path[2:]
-
-    if relative_path in ("icon.ico", "icon.png", "art.txt"):
-        relative_path = os.path.join("assets", relative_path)
-        
-    return os.path.join(base_path, relative_path)
-
-DEFAULT_THEME = {
-    "WIN95_BG": "#C0C0C0",
-    "WIN95_TEAL": "#008080",
-    "WIN95_NAVY": "#000080",
-    "WIN95_WHITE": "#FFFFFF",
-    "WIN95_TEXT": "#000000",
-    "WIN95_DISABLED": "#000000",
-    "WIN95_TITLE_TEXT": "#FFFFFF",
-    "WIN95_ACTIVE_FG": "#FFFFFF",
-    "WIN95_ACTIVE_BG": "#000080"
-}
-
-def load_available_themes():
-    themes = {"Windows 95": DEFAULT_THEME}
-    themes_dir = resource_path("themes")
-    if os.path.exists(themes_dir) and os.path.isdir(themes_dir):
-        for filename in os.listdir(themes_dir):
-            if filename.endswith(".json"):
-                theme_name = filename[:-5].replace("_", " ").title()
-                path = os.path.join(themes_dir, filename)
-                try:
-                    with open(path, "r", encoding="utf-8") as f:
-                        data = json.load(f)
-                        themes[theme_name] = {**DEFAULT_THEME, **data}
-                except Exception:
-                    pass
-    return themes
-
-AVAILABLE_THEMES = load_available_themes()
-
-def load_config():
-    if os.path.exists(CONFIG_FILE):
-        try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
-    return {}
-
-def save_config(config_data):
-    try:
-        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-            json.dump(config_data, f, indent=4)
-    except Exception:
-        pass
-
-def load_theme():
-    config = load_config()
-    saved_theme_name = config.get("selected_theme", "Windows 95")
-    if saved_theme_name in AVAILABLE_THEMES:
-        return AVAILABLE_THEMES[saved_theme_name]
-    return DEFAULT_THEME
-
-THEME = load_theme()
-
-WIN95_BG = THEME["WIN95_BG"]
-WIN95_TEAL = THEME["WIN95_TEAL"]
-WIN95_NAVY = THEME["WIN95_NAVY"]
-WIN95_WHITE = THEME["WIN95_WHITE"]
-WIN95_TEXT = THEME["WIN95_TEXT"]
-WIN95_DISABLED = THEME["WIN95_DISABLED"]
-WIN95_TITLE_TEXT = THEME.get("WIN95_TITLE_TEXT", "#FFFFFF")
-WIN95_ACTIVE_FG = THEME.get("WIN95_ACTIVE_FG", "#FFFFFF")
-WIN95_ACTIVE_BG = THEME.get("WIN95_ACTIVE_BG", "#000080")
-
-WIN95_FONT = ("MS Sans Serif", 9)
-WIN95_FONT_BOLD = ("MS Sans Serif", 9, "bold")
-
-WIN95_DEFAULT_BTN_TEXT = "Download"
-
-def fix_win95_taskbar(root):
-    try:
-        GWL_EXSTYLE = -20
-        WS_EX_APPWINDOW = 0x00040000
-        WS_EX_TOOLWINDOW = 0x00000080
-        
-        hwnd = ctypes.windll.user32.GetParent(root.winfo_id())
-        style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-        style = (style & ~WS_EX_TOOLWINDOW) | WS_EX_APPWINDOW
-        ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
-        
-        root.withdraw()
-        root.deiconify()
-    except Exception:
-        pass
+from shared import *
 
 class MediaDownloaderApp:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title(APP_TITLE)
+        self.root.title(FETCH_TITLE)
         self.root.overrideredirect(True)
         self.root.configure(bg=WIN95_TEAL)
 
@@ -246,7 +138,7 @@ class MediaDownloaderApp:
 
         self.icon_label.pack(side="left", padx=(4, 2))
 
-        self.title_label = tk.Label(self.title_bar, text=APP_TITLE, bg=WIN95_NAVY, fg=WIN95_TITLE_TEXT, font=WIN95_FONT_BOLD)
+        self.title_label = tk.Label(self.title_bar, text=FETCH_TITLE, bg=WIN95_NAVY, fg=WIN95_TITLE_TEXT, font=WIN95_FONT_BOLD)
         self.title_label.pack(side="left", padx=2)
 
         self.close_btn = tk.Button(
@@ -290,6 +182,12 @@ class MediaDownloaderApp:
         form_frame.pack(fill="x", side="top")
 
         tk.Label(form_frame, text="Media URL:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=0, column=0, sticky="w", pady=4)
+
+        self.clear_url_button = tk.Button(
+            form_frame, text="Clear Url", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT,
+            bd=1, relief=tk.RAISED, font=("MS Sans Serif", 7), command=lambda: self.url_entry.delete(0, tk.END)
+        )
+        self.clear_url_button.grid(row=0, column=3, padx=(4, 0), pady=4)
 
         self.url_entry = tk.Entry(form_frame, bg=WIN95_WHITE, fg=WIN95_TEXT, bd=2, relief=tk.SUNKEN, font=WIN95_FONT)
         self.url_entry.grid(row=0, column=1, columnspan=2, sticky="ew", padx=(8, 0), pady=4)
@@ -806,7 +704,6 @@ class MediaDownloaderApp:
             return
 
         self._update_button_style()
-        self.url_entry.delete(0, tk.END)
         self.download_btn.config(state="disabled")
         self.set_progress(0)
         
@@ -848,7 +745,6 @@ class MediaDownloaderApp:
 
     def run(self):
         self.root.mainloop()
-
 
 if __name__ == "__main__":
     app = MediaDownloaderApp()
