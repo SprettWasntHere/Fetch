@@ -42,12 +42,3 @@ def download_and_execute_update(download_url, asset_name):
     )
 
     sys.exit(0)
-
-def auto_updater(current_ver):
-	CURRENT_VERSION = current_ver
-
-	new_ver, download_url, asset_name = check_for_updates(
-		CURRENT_VERSION, GITHUB_OWNER, GITHUB_REPO
-	)
-	if new_ver:
-		download_and_execute_update(download_url, asset_name)
