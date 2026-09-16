@@ -29,3 +29,4 @@ Thumbs.db
 *_old.py
 installer_output/
 *.iss
+check-ytdlp.py
