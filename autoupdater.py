@@ -28,17 +28,31 @@ def check_for_updates(current_version, owner, repo):
 
     return None, None, None
 
-def download_and_execute_update(download_url, asset_name):
+def download_and_execute_update(download_url, asset_name, progress_callback=None, log_callback=None):
     response = requests.get(download_url, stream=True)
+    response.raise_for_status()
+    
+    total_size = int(response.headers.get("content-length", 0))
     temp_dir = tempfile.gettempdir()
     installer_path = os.path.join(temp_dir, asset_name)
 
+    downloaded_size = 0
     with open(installer_path, "wb") as f:
         for chunk in response.iter_content(chunk_size=8192):
-            f.write(chunk)
+            if chunk:
+                f.write(chunk)
+                downloaded_size += len(chunk)
+                if total_size > 0 and progress_callback:
+                    percent = int((downloaded_size / total_size) * 100)
+                    progress_callback(percent)
+
+    if progress_callback:
+        progress_callback(100)
+
+    if log_callback:
+        log_callback("Update downloaded successfully.")
 
     subprocess.Popen(
-        [installer_path, "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART"]
+        [installer_path, "/NORESTART"]
     )
-
     sys.exit(0)

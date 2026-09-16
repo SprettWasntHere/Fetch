@@ -13,7 +13,7 @@ from texts import DOWNLOAD_TEXTS
 from autoupdater import *
 
 APP_TITLE = "Fetch"
-APP_VERSION = "1.5.2"
+APP_VERSION = "1.5.3"
 SIZE_X = 540
 SIZE_Y = 470
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".fetch_presets.json")
@@ -185,13 +185,19 @@ class MediaDownloaderApp:
                 self.log_status(
                     f"New Fetch version {new_ver} found! Downloading update..."
                 )
-                download_and_execute_update(download_url, asset_name)
+                download_and_execute_update(
+                    download_url,
+                    asset_name,
+                    progress_callback=self.set_progress,
+                    log_callback=self.log_status
+                )
 
             else:
                 self.log_status("Fetch is up to date!")
 
         except Exception as e:
             self.log_status(f"Auto-update check failed: {e}")
+            self.set_progress(100)
 
     def _on_auto_paste_toggle(self):
         self.config_data["auto_paste"] = self.auto_paste_var.get()
