@@ -171,10 +171,6 @@ class MediaDownloaderApp:
         self.root.bind("<FocusIn>", self._check_clipboard_url)
         self.cancel_event = threading.Event()
 
-        threading.Thread(
-            target=self._check_app_updates_background, daemon=True
-        ).start()
-
     def _check_app_updates_background(self):
         try:
             self.log_status("Checking for Fetch updates...")
@@ -198,6 +194,11 @@ class MediaDownloaderApp:
         except Exception as e:
             self.log_status(f"Auto-update check failed: {e}")
             self.set_progress(100)
+
+    def _check_app_updates_button(self):
+        threading.Thread(
+            target=self._check_app_updates_background, daemon=True
+        ).start()
 
     def _on_auto_paste_toggle(self):
         self.config_data["auto_paste"] = self.auto_paste_var.get()
@@ -263,6 +264,12 @@ class MediaDownloaderApp:
 
         self.version_label = tk.Label(version_frame, text=f" v{APP_VERSION} ", bg=WIN95_BG, fg=WIN95_TEXT, font=("MS Sans Serif", 8), anchor="w")
         self.version_label.pack(side="left")
+
+        self.check_update_button = tk.Button(
+            version_frame, text="Check for Updates", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT,
+            bd=1, relief=tk.RAISED, font=("MS Sans Serif", 7), command=self._check_app_updates_button
+        )
+        self.check_update_button.pack(side="left", padx=(4, 0))
 
         current_theme_name = self.config_data.get("selected_theme", "Windows 95")
         self.theme_var = tk.StringVar(value=current_theme_name)
