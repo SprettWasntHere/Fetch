@@ -4,7 +4,7 @@ import json
 import ctypes
 
 FETCH_TITLE = "Fetch"
-APP_VERSION = "1.5.3"
+APP_VERSION = "1.6.0"
 
 SIZE_X = 540
 SIZE_Y = 470
