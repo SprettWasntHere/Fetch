@@ -287,7 +287,7 @@ class MediaDownloaderApp:
         save_preset_btn = tk.Button(preset_btn_frame, text="Save", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=5, command=self.save_current_as_preset)
         save_preset_btn.pack(side="left", padx=(0, 2))
 
-        delete_preset_btn = tk.Button(preset_btn_frame, text="Delete", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=5, command=self.delete_current_preset)
+        delete_preset_btn = tk.Button(preset_btn_frame, text="Delete", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=5, command=self._ask_delete_confirmation)
         delete_preset_btn.pack(side="left")
         
         form_frame.columnconfigure(1, weight=1)
@@ -669,6 +669,89 @@ class MediaDownloaderApp:
         self.root.wait_window(dialog)
         return result[0]
 
+    def _ask_delete_confirmation(self):
+        current_preset_name = self.preset_var.get()
+
+        dialog = tk.Toplevel(self.root)
+        dialog.overrideredirect(True)
+        dialog.configure(bg=WIN95_TEAL)
+
+        outer = tk.Frame(dialog, bg=WIN95_BG, bd=2, relief=tk.RAISED)
+        outer.pack(fill="both", expand=True, padx=2, pady=2)
+
+        title_bar = tk.Frame(outer, bg=WIN95_NAVY, height=22)
+        title_bar.pack(fill="x", side="top", padx=2, pady=2)
+
+        ico_path = resource_path("icon.ico")
+        png_path = resource_path("icon.png")
+
+        if os.path.exists(png_path) or os.path.exists(ico_path):
+            try:
+                img_file = png_path if os.path.exists(png_path) else ico_path
+                img = tk.PhotoImage(file=img_file)
+                icon_img = img.subsample(max(1, img.width() // 16))
+                icon_lbl = tk.Label(title_bar, image=icon_img, bg=WIN95_NAVY)
+                icon_lbl.image = icon_img
+                icon_lbl.pack(side="left", padx=(4, 2))
+            except Exception:
+                pass
+
+        title_lbl = tk.Label(title_bar, text="Delete Preset?", bg=WIN95_NAVY, fg=WIN95_TITLE_TEXT, font=WIN95_FONT_BOLD)
+        title_lbl.pack(side="left", padx=2)
+
+        result = [None]
+
+        def close_dialog(val=None):
+            result[0] = val
+            dialog.destroy()
+
+        text_lbl = tk.Label(outer, text=f"Are you sure you want to delete the preset '{current_preset_name}'?", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT, wraplength=300, justify="left")
+        text_lbl.pack(fill="x", padx=12, pady=(12, 8))
+
+        close_btn = tk.Button(
+            title_bar, text="✕", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, font=("MS Sans Serif", 7, "bold"),
+            bd=1, relief=tk.RAISED, width=2, height=1, command=lambda: close_dialog(None)
+        )
+        close_btn.pack(side="right", padx=2, pady=2)
+
+        content = tk.Frame(outer, bg=WIN95_BG)
+        content.pack(fill="both", expand=True, padx=12, pady=12)
+
+        btn_box = tk.Frame(content, bg=WIN95_BG)
+        btn_box.pack(fill="x")
+
+        def on_ok(e=None):
+            if current_preset_name in self.presets:
+                if len(self.presets) <= 1:
+                    self.log_status("Cannot delete the last remaining preset.")
+                    return
+                
+                del self.presets[current_preset_name]
+                self.save_presets()
+                self.preset_var.set("Presets")
+                self.log_status(f"Deleted preset: {current_preset_name}")
+                close_dialog(None)
+            else:
+                self.log_status("No valid preset selected to delete.")
+                close_dialog(None)
+
+        ok_btn = tk.Button(btn_box, text="OK", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=8, command=on_ok)
+        ok_btn.pack(side="right", padx=(4, 0))
+
+        cancel_btn = tk.Button(btn_box, text="Cancel", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=8, command=lambda: close_dialog(None))
+        cancel_btn.pack(side="right")
+
+        dialog.update_idletasks()
+        w = dialog.winfo_reqwidth()
+        h = dialog.winfo_reqheight()
+        x = self.root.winfo_rootx() + (self.root.winfo_width() // 2) - (w // 2)
+        y = self.root.winfo_rooty() + (self.root.winfo_height() // 2) - (h // 2)
+        dialog.geometry(f"+{x}+{y}")
+
+        dialog.grab_set()
+        self.root.wait_window(dialog)
+        return result[0]
+
     def save_current_as_preset(self):
         preset_name = self._ask_preset_name()
         if preset_name:
@@ -677,19 +760,6 @@ class MediaDownloaderApp:
             self.save_presets()
             self.preset_var.set(name)
             self.log_status(f"Saved preset: {name}")
-
-    def delete_current_preset(self):
-        current_name = self.preset_var.get()
-        if current_name in self.presets:
-            if len(self.presets) <= 1:
-                self.log_status("Cannot delete the last remaining preset.")
-                return
-            del self.presets[current_name]
-            self.save_presets()
-            self.preset_var.set("Presets")
-            self.log_status(f"Deleted preset: {current_name}")
-        else:
-            self.log_status("No valid preset selected to delete.")
 
     def log_status(self, text):
         if threading.current_thread() != threading.main_thread():
