@@ -259,7 +259,7 @@ class MediaDownloaderApp:
         browse_btn = tk.Button(form_frame, text="Browse...", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, command=self.browse_folder)
         browse_btn.grid(row=3, column=3, sticky="e", pady=4)
 
-        tk.Label(form_frame, text="Presets:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=5, column=0, sticky="w", pady=4)
+        tk.Label(form_frame, text="Folder Presets:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=5, column=0, sticky="w", pady=4)
 
         self.preset_var = tk.StringVar(value="Presets")
         self.preset_container = tk.Frame(form_frame, bg=WIN95_WHITE, bd=2, relief=tk.SUNKEN)
