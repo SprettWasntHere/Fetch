@@ -205,7 +205,7 @@ class MediaDownloaderApp:
         self.url_entry.focus()
 
         self.auto_paste_chk = tk.Checkbutton(
-            form_frame, text="Auto-paste link from clipboard", variable=self.auto_paste_var,
+            form_frame, text="Auto-paste URL from clipboard", variable=self.auto_paste_var,
             bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT,
             selectcolor=WIN95_WHITE, font=WIN95_FONT, command=self._on_auto_paste_toggle
         )
