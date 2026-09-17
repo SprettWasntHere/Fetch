@@ -44,6 +44,9 @@ class MediaDownloaderApp:
 
         saved_auto_paste = self.config_data.get("auto_paste", False)
         self.auto_paste_var = tk.BooleanVar(value=saved_auto_paste)
+        self.auto_clear_url_var = tk.BooleanVar(
+            value=self.config_data.get("auto_clear_url", False)
+        )
 
         self.app_icon_img = None
         self.text_index = 0
@@ -94,6 +97,14 @@ class MediaDownloaderApp:
 
     def _on_auto_paste_toggle(self):
         self.config_data["auto_paste"] = self.auto_paste_var.get()
+        save_config(self.config_data)
+
+    def _update_open_folder_after(self):
+        self.config_data["open_folder_after"] = self.open_folder_after_var.get()
+        save_config(self.config_data)
+
+    def _update_auto_clear_url(self):
+        self.config_data["auto_clear_url"] = self.auto_clear_url_var.get()
         save_config(self.config_data)
 
     def _check_clipboard_url(self, event=None):
@@ -187,7 +198,7 @@ class MediaDownloaderApp:
             form_frame, text="Clear Url", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT,
             bd=1, relief=tk.RAISED, font=("MS Sans Serif", 7), command=lambda: self.url_entry.delete(0, tk.END)
         )
-        self.clear_url_button.grid(row=0, column=3, padx=(4, 0), pady=4)
+        self.clear_url_button.grid(row=0, column=3, sticky="e", padx=(4, 0), pady=4)
 
         self.url_entry = tk.Entry(form_frame, bg=WIN95_WHITE, fg=WIN95_TEXT, bd=2, relief=tk.SUNKEN, font=WIN95_FONT)
         self.url_entry.grid(row=0, column=1, columnspan=2, sticky="ew", padx=(8, 0), pady=4)
@@ -199,6 +210,13 @@ class MediaDownloaderApp:
             selectcolor=WIN95_WHITE, font=WIN95_FONT, command=self._on_auto_paste_toggle
         )
         self.auto_paste_chk.grid(row=1, column=1, columnspan=2, sticky="w", padx=(6, 0), pady=(0, 4))
+
+        self.auto_clear_url_chk = tk.Checkbutton(
+            form_frame, text="Auto-clear URL", variable=self.auto_clear_url_var,
+            bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT,
+            selectcolor=WIN95_WHITE, font=WIN95_FONT, command=self._update_auto_clear_url
+        )
+        self.auto_clear_url_chk.grid(row=1, column=2, sticky="w", padx=(4, 0), pady=(0, 4))
 
         tk.Label(form_frame, text="Media Format:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=2, column=0, sticky="w", pady=4)
 
@@ -226,16 +244,26 @@ class MediaDownloaderApp:
         self.dir_entry = tk.Entry(form_frame, bg=WIN95_WHITE, readonlybackground=WIN95_WHITE, fg=WIN95_TEXT, bd=2, relief=tk.SUNKEN, font=WIN95_FONT)
         self.dir_entry.insert(0, self.download_path)
         self.dir_entry.config(state="readonly")
-        self.dir_entry.grid(row=3, column=1, sticky="ew", padx=(8, 4), pady=4)
+        self.dir_entry.grid(row=3, column=1, columnspan=2, sticky="ew", padx=(8, 4), pady=4)
+
+        self.open_folder_after_var = tk.BooleanVar(
+            value=self.config_data.get("open_folder_after", False)
+        )
+        self.open_dir_chk = tk.Checkbutton(
+            form_frame, text="Open folder after download", variable=self.open_folder_after_var,
+            bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT,
+            selectcolor=WIN95_WHITE, font=WIN95_FONT, command=lambda: self._update_open_folder_after()
+        )
+        self.open_dir_chk.grid(row=4, column=1, sticky="w", padx=(4, 0), pady=4)
 
         browse_btn = tk.Button(form_frame, text="Browse...", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, command=self.browse_folder)
-        browse_btn.grid(row=3, column=2, sticky="e", pady=4)
+        browse_btn.grid(row=3, column=3, sticky="e", pady=4)
 
-        tk.Label(form_frame, text="Presets:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=4, column=0, sticky="w", pady=4)
+        tk.Label(form_frame, text="Presets:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=5, column=0, sticky="w", pady=4)
 
         self.preset_var = tk.StringVar(value="Presets")
         self.preset_container = tk.Frame(form_frame, bg=WIN95_WHITE, bd=2, relief=tk.SUNKEN)
-        self.preset_container.grid(row=4, column=1, sticky="w", padx=(8, 4), pady=4)
+        self.preset_container.grid(row=5, column=1, columnspan=2, sticky="w", padx=(8, 4), pady=4)
 
         self.preset_label = tk.Label(
             self.preset_container, textvariable=self.preset_var, bg=WIN95_WHITE, fg=WIN95_TEXT,
@@ -254,7 +282,7 @@ class MediaDownloaderApp:
         self.preset_container.bind("<Button-1>", lambda e: self._toggle_preset_dropdown())
 
         preset_btn_frame = tk.Frame(form_frame, bg=WIN95_BG)
-        preset_btn_frame.grid(row=4, column=2, sticky="e", pady=4)
+        preset_btn_frame.grid(row=5, column=3, sticky="e", pady=4)
 
         save_preset_btn = tk.Button(preset_btn_frame, text="Save", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=5, command=self.save_current_as_preset)
         save_preset_btn.pack(side="left", padx=(0, 2))
@@ -331,7 +359,6 @@ class MediaDownloaderApp:
                 save_config(self.config_data)
                 
                 self.apply_theme(selected_theme_name)
-#                self.log_status(f"Using '{selected_theme_name}' theme.")
 
             if self.theme_popup:
                 self.theme_popup.destroy()
@@ -723,8 +750,17 @@ class MediaDownloaderApp:
                 progress_callback=self.set_progress
             )
             self.print_art_final()
+            if self.auto_clear_url_var.get():
+                self.root.after(0, lambda: self.url_entry.delete(0, tk.END))
             self.root.after(0, self._reset_button_style)
             self.root.after(0, lambda: self.download_btn.config(state="normal"))
+
+            if self.open_folder_after_var.get():
+                try:
+                    if os.name == "nt":
+                        os.startfile(self.download_path)
+                except Exception as e:
+                    self.log_status(f"Failed to open folder: {e}")
 
         threading.Thread(target=background_task, daemon=True).start()
 

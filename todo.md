@@ -1,14 +1,14 @@
 # Fetch
 
-- Make the url stay after pressing download button.
-    - Add a clear url textbox button.
+- <strike>Make the url stay after pressing download button.
+    - Add a clear url textbox button.</strike>
 
 - cancel/stop download button
 
 - get urls from text file for batch downloading
     - drag and drop would be cool
 
-- open download folder checkbox (for instantly opening the directory where the media is downloaded)
+- <strike>open download folder checkbox (for instantly opening the directory where the media is downloaded)</strike>
 
 - speed and ETA tracker under download percentage
 
