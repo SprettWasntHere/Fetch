@@ -7,7 +7,7 @@ FETCH_TITLE = "Fetch"
 APP_VERSION = "1.6.0"
 
 SIZE_X = 540
-SIZE_Y = 470
+SIZE_Y = 520
 
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".fetch_presets.json")
 
