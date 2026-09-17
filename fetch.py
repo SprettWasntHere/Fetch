@@ -54,7 +54,7 @@ class MediaDownloaderApp:
         self.preset_popup = None
         self.theme_popup = None
 
-        self._build_win95_ui()
+        self._build_fetch_ui()
         self.preset_var.set(initial_preset_display)
         self.dir_entry.config(state="normal")
         self.dir_entry.delete(0, tk.END)
@@ -62,7 +62,7 @@ class MediaDownloaderApp:
         self.dir_entry.config(state="readonly")
         
         self._center_window(SIZE_X, SIZE_Y)
-        fix_win95_taskbar(self.root)
+        fix_fetch_taskbar(self.root)
         self.root.bind("<FocusIn>", self._check_clipboard_url)
         self.cancel_event = threading.Event()
 
@@ -126,7 +126,7 @@ class MediaDownloaderApp:
         y = (self.root.winfo_screenheight() // 2) - (height // 2)
         self.root.geometry(f"{width}x{height}+{x}+{y}")
 
-    def _build_win95_ui(self):
+    def _build_fetch_ui(self):
         self.outer_frame = tk.Frame(self.root, bg=WIN95_BG, bd=2, relief=tk.RAISED)
         self.outer_frame.pack(fill="both", expand=True, padx=2, pady=2)
 

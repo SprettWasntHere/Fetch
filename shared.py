@@ -95,7 +95,7 @@ WIN95_FONT_BOLD = ("MS Sans Serif", 9, "bold")
 
 WIN95_DEFAULT_BTN_TEXT = "Download"
 
-def fix_win95_taskbar(root):
+def fix_fetch_taskbar(root):
     try:
         GWL_EXSTYLE = -20
         WS_EX_APPWINDOW = 0x00040000

@@ -158,9 +158,7 @@ def run_download(
                         log_callback(f"[{timestamp}] Downloading: {filename}")
                         logged_files.add(filename)
 
-                    total_bytes = d.get("total_bytes") or d.get(
-                        "total_bytes_estimate"
-                    )
+                    total_bytes = d.get("total_bytes") or d.get("total_bytes_estimate")
                     downloaded_bytes = d.get("downloaded_bytes", 0)
                     if total_bytes and progress_callback:
                         track_fraction = (
