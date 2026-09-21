@@ -23,12 +23,12 @@
 
 - <strike>Put mediadownloaderapp into its own file so making this will be less bad</strike>
 
-- Tab layout for Fetch and File Converter
+- <strike>Tab layout for Fetch and File Converter</strike>
 
-- Input file picker
+- <strike>Input file picker</strike>
     - plus drag and drop
 
-- target format dropdown
+- <strike>target format dropdown</strike>
 
 - output destination selector (will be shared with Fetch download folder presets)
 

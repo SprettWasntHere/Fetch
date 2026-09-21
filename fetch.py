@@ -10,6 +10,8 @@ from texts import DOWNLOAD_TEXTS
 from autoupdater import *
 from shared import *
 
+import muzzle
+
 class MediaDownloaderApp:
     def __init__(self):
         self.root = tk.Tk()
@@ -41,6 +43,8 @@ class MediaDownloaderApp:
 
         saved_format = self.config_data.get("selected_format", "Video (MP4)")
         self.format_var = tk.StringVar(value=saved_format)
+
+        self.preset_var = tk.StringVar(value="Presets")
 
         saved_auto_paste = self.config_data.get("auto_paste", False)
         self.auto_paste_var = tk.BooleanVar(value=saved_auto_paste)
@@ -189,7 +193,44 @@ class MediaDownloaderApp:
         content_area = tk.Frame(self.outer_frame, bg=WIN95_BG)
         content_area.pack(fill="both", expand=True, padx=10, pady=10)
 
-        form_frame = tk.Frame(content_area, bg=WIN95_BG)
+        tab_header = tk.Frame(content_area, bg=WIN95_BG)
+        tab_header.pack(fill="x", pady=(0, 4))
+
+        self.fetch_tab_btn = tk.Button(tab_header, text=" Fetch ", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.SUNKEN, font=WIN95_FONT_BOLD, command=lambda: self.switch_tab("fetch"))
+        self.fetch_tab_btn.pack(side="left", padx=(0, 2))
+
+        self.muzzle_tab_btn = tk.Button(tab_header, text=" Muzzle ", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, command=lambda: self.switch_tab("muzzle"))
+        self.muzzle_tab_btn.pack(side="left")
+
+        self.tab_container = tk.Frame(content_area, bg=WIN95_BG, bd=2, relief=tk.GROOVE)
+        self.tab_container.pack(fill="both", expand=True)
+
+        self.fetch_frame = tk.Frame(self.tab_container, bg=WIN95_BG)
+        self._build_fetch_tab_contents(self.fetch_frame)
+
+        self.muzzle_frame = tk.Frame(self.tab_container, bg=WIN95_BG)
+        self.muzzle_tab_obj = muzzle.MuzzleTab(self.muzzle_frame, lambda: self.download_path, self.log_status)
+
+        self.fetch_frame.pack(fill="both", expand=True, padx=4, pady=4)
+
+        content_area = tk.Frame(self.outer_frame, bg=WIN95_BG)
+        content_area.pack(fill="both", expand=True, padx=10, pady=10)
+
+    def switch_tab(self, tab_name):
+        self.fetch_frame.pack_forget()
+        self.muzzle_frame.pack_forget()
+
+        if tab_name == "fetch":
+            self.fetch_tab_btn.config(relief=tk.SUNKEN, font=WIN95_FONT_BOLD)
+            self.muzzle_tab_btn.config(relief=tk.RAISED, font=WIN95_FONT)
+            self.fetch_frame.pack(fill="both", expand=True, padx=4, pady=4)
+        elif tab_name == "muzzle":
+            self.muzzle_tab_btn.config(relief=tk.SUNKEN, font=WIN95_FONT_BOLD)
+            self.fetch_tab_btn.config(relief=tk.RAISED, font=WIN95_FONT)
+            self.muzzle_frame.pack(fill="both", expand=True, padx=4, pady=4)
+
+    def _build_fetch_tab_contents(self, parent):
+        form_frame = tk.Frame(parent, bg=WIN95_BG)
         form_frame.pack(fill="x", side="top")
 
         tk.Label(form_frame, text="Media URL:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=0, column=0, sticky="w", pady=4)
@@ -202,7 +243,6 @@ class MediaDownloaderApp:
 
         self.url_entry = tk.Entry(form_frame, bg=WIN95_WHITE, fg=WIN95_TEXT, bd=2, relief=tk.SUNKEN, font=WIN95_FONT)
         self.url_entry.grid(row=0, column=1, columnspan=2, sticky="ew", padx=(8, 0), pady=4)
-        self.url_entry.focus()
 
         self.auto_paste_chk = tk.Checkbutton(
             form_frame, text="Auto-paste URL from clipboard", variable=self.auto_paste_var,
@@ -261,7 +301,6 @@ class MediaDownloaderApp:
 
         tk.Label(form_frame, text="Folder Presets:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=5, column=0, sticky="w", pady=4)
 
-        self.preset_var = tk.StringVar(value="Presets")
         self.preset_container = tk.Frame(form_frame, bg=WIN95_WHITE, bd=2, relief=tk.SUNKEN)
         self.preset_container.grid(row=5, column=1, columnspan=2, sticky="w", padx=(8, 4), pady=4)
 
@@ -293,18 +332,18 @@ class MediaDownloaderApp:
         form_frame.columnconfigure(1, weight=1)
 
         self.download_btn = tk.Button(
-            content_area, text=WIN95_DEFAULT_BTN_TEXT, bg=WIN95_BG, fg=WIN95_TEXT,
+            parent, text=WIN95_DEFAULT_BTN_TEXT, bg=WIN95_BG, fg=WIN95_TEXT,
             disabledforeground=WIN95_DISABLED, bd=2, relief=tk.RAISED, font=WIN95_FONT_BOLD, activebackground=WIN95_BG, activeforeground=WIN95_TEXT,
             pady=3, command=self.start_download_thread
         )
         self.download_btn.pack(fill="x", pady=(10, 8))
 
         self.progress_label = tk.Label(
-            content_area, text="0%", bg=WIN95_BG, fg=WIN95_TEXT, bd=2, font=WIN95_FONT, anchor="center"
+            parent, text="0%", bg=WIN95_BG, fg=WIN95_TEXT, bd=2, font=WIN95_FONT, anchor="center"
         )
 
         self.status_box = tk.Text(
-            content_area, height=9, bg=WIN95_WHITE, fg=WIN95_TEXT, bd=2,
+            parent, height=9, bg=WIN95_WHITE, fg=WIN95_TEXT, bd=2,
             relief=tk.SUNKEN, font=("Courier New", 9), state="disabled"
         )
         self.status_box.pack(fill="both", expand=True)
@@ -392,20 +431,17 @@ class MediaDownloaderApp:
         def update_widget_colors(widget):
             w_type = widget.winfo_class()
             try:
-                if w_type in ("Frame", "Toplevel"):
+                if w_type in ("Frame", "Toplevel", "LabelFrame", "Labelframe"):
                     widget.configure(bg=WIN95_BG)
+                    if w_type in ("LabelFrame", "Labelframe"):
+                        widget.configure(fg=WIN95_TEXT)
                 elif w_type == "Label":
                     if widget == self.title_label or widget.master == self.title_bar:
                         widget.configure(bg=WIN95_NAVY, fg=WIN95_TITLE_TEXT)
                     else:
                         widget.configure(bg=WIN95_BG, fg=WIN95_TEXT)
                 elif w_type == "Button":
-                    if widget == self.close_btn:
-                        widget.configure(bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT)
-                    elif widget == self.combo_btn or widget == self.preset_btn:
-                        widget.configure(bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT)
-                    else:
-                        widget.configure(bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT)
+                    widget.configure(bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT)
                 elif w_type == "Entry":
                     widget.configure(bg=WIN95_WHITE, fg=WIN95_TEXT, readonlybackground=WIN95_WHITE)
                 elif w_type == "Text":
