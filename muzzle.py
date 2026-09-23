@@ -4,13 +4,6 @@ import threading
 import subprocess
 import os
 
-# Optional drag-and-drop support if tkinterdnd2 is installed
-try:
-    from tkinterdnd2 import DND_FILES
-    HAS_DND = True
-except ImportError:
-    HAS_DND = False
-
 MUZZLE_FORMATS = ["MP4", "MKV", "AVI", "MOV", "WEBM", "MP3", "WAV", "FLAC", "GIF"]
 
 class MuzzleTab:
@@ -26,7 +19,6 @@ class MuzzleTab:
         self.output_dir_var = tk.StringVar(value=self.get_download_path())
         
         self._build_ui()
-        self._setup_dnd()
 
     def _build_ui(self):
         bg = self.frame.cget("bg")
