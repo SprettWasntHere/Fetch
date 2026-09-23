@@ -23,7 +23,7 @@ class MuzzleTab:
     def _build_ui(self):
         bg = self.frame.cget("bg")
         
-        self.input_frame = tk.LabelFrame(self.frame, text="Input File (Drag & Drop Supported)", bg=bg, fg="black", font=("MS Sans Serif", 8, "bold"), bd=2, relief=tk.GROOVE)
+        self.input_frame = tk.LabelFrame(self.frame, text="Input File", bg=bg, fg="black", font=("MS Sans Serif", 8, "bold"), bd=2, relief=tk.GROOVE)
         self.input_frame.pack(fill="x", padx=4, pady=4, ipadx=4, ipady=4)
 
         self.input_entry = tk.Entry(self.input_frame, textvariable=self.input_file_var, bg="white", fg="black", bd=2, relief=tk.SUNKEN, font=("MS Sans Serif", 8))
@@ -50,7 +50,7 @@ class MuzzleTab:
         self.format_label.bind("<Button-1>", lambda e: self._toggle_format_dropdown())
         self.format_container.bind("<Button-1>", lambda e: self._toggle_format_dropdown())
 
-        out_frame = tk.LabelFrame(self.frame, text="Output Directory (Shared with Fetch)", bg=bg, fg="black", font=("MS Sans Serif", 8, "bold"), bd=2, relief=tk.GROOVE)
+        out_frame = tk.LabelFrame(self.frame, text="Output Directory", bg=bg, fg="black", font=("MS Sans Serif", 8, "bold"), bd=2, relief=tk.GROOVE)
         out_frame.pack(fill="x", padx=4, pady=4, ipadx=4, ipady=4)
 
         self.out_entry = tk.Entry(out_frame, textvariable=self.output_dir_var, bg="white", fg="black", bd=2, relief=tk.SUNKEN, font=("MS Sans Serif", 8))
