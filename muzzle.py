@@ -60,7 +60,7 @@ class MuzzleTab:
         out_browse_btn = tk.Button(out_frame, text="Browse...", bg=bg, fg="black", bd=2, relief=tk.RAISED, font=("MS Sans Serif", 8), command=self.browse_output_folder)
         out_browse_btn.pack(side="right", padx=(2, 4), pady=4)
 
-        self.cmd_frame = tk.LabelFrame(self.frame, text="Dynamic FFmpeg Command", bg=bg, fg="black", font=("MS Sans Serif", 8, "bold"), bd=2, relief=tk.GROOVE)
+        self.cmd_frame = tk.LabelFrame(self.frame, text="FFmpeg Command", bg=bg, fg="black", font=("MS Sans Serif", 8, "bold"), bd=2, relief=tk.GROOVE)
         self.cmd_frame.pack(fill="both", expand=True, padx=4, pady=4, ipadx=4, ipady=4)
 
         self.cmd_box = tk.Text(self.cmd_frame, height=5, bg="white", fg="black", bd=2, relief=tk.SUNKEN, font=("Courier New", 8))

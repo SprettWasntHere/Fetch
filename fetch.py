@@ -229,6 +229,8 @@ class MediaDownloaderApp:
             self.fetch_tab_btn.config(relief=tk.RAISED, font=WIN95_FONT)
             self.muzzle_frame.pack(fill="both", expand=True, padx=4, pady=4)
 
+        self.apply_theme(self.theme_var.get()) # This fix is half-assed but it works so idc
+
     def _build_fetch_tab_contents(self, parent):
         form_frame = tk.Frame(parent, bg=WIN95_BG)
         form_frame.pack(fill="x", side="top")
