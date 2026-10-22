@@ -4,7 +4,7 @@ import threading
 import subprocess
 import os
 
-MUZZLE_FORMATS = ["MP4", "MKV", "AVI", "MOV", "WEBM", "MP3", "WAV", "FLAC", "GIF"]
+MUZZLE_FORMATS = ["MP4", "MKV", "AVI", "MOV", "WEBM", "MP3", "WAV", "FLAC", "GIF", "VP6"]
 
 class MuzzleTab:
     def __init__(self, parent_frame, get_download_path_callback, log_callback):
@@ -29,6 +29,7 @@ class MuzzleTab:
         self.input_entry = tk.Entry(self.input_frame, textvariable=self.input_file_var, bg="white", fg="black", bd=2, relief=tk.SUNKEN, font=("MS Sans Serif", 8))
         self.input_entry.pack(side="left", fill="x", expand=True, padx=(4, 2), pady=4)
         self.input_entry.bind("<KeyRelease>", lambda e: self.update_command_preview())
+        self.input_entry.config(state="readonly")
 
         self.browse_btn = tk.Button(self.input_frame, text="Browse...", bg=bg, fg="black", bd=2, relief=tk.RAISED, font=("MS Sans Serif", 8), command=self.browse_input_file)
         self.browse_btn.pack(side="right", padx=(2, 4), pady=4)
@@ -56,6 +57,7 @@ class MuzzleTab:
         self.out_entry = tk.Entry(out_frame, textvariable=self.output_dir_var, bg="white", fg="black", bd=2, relief=tk.SUNKEN, font=("MS Sans Serif", 8))
         self.out_entry.pack(side="left", fill="x", expand=True, padx=(4, 2), pady=4)
         self.out_entry.bind("<KeyRelease>", lambda e: self.update_command_preview())
+        self.out_entry.config(state="readonly")
 
         out_browse_btn = tk.Button(out_frame, text="Browse...", bg=bg, fg="black", bd=2, relief=tk.RAISED, font=("MS Sans Serif", 8), command=self.browse_output_folder)
         out_browse_btn.pack(side="right", padx=(2, 4), pady=4)
@@ -127,6 +129,9 @@ class MuzzleTab:
         threading.Thread(target=self._run_conversion, daemon=True).start()
 
     def _run_conversion(self):
+        from shared import resource_path
+        bundled_ffmpeg_dir = resource_path("bin")
+
         inp = self.input_file_var.get().strip()
         fmt = self.target_format_var.get().strip().lower()
         out_dir = self.output_dir_var.get().strip() or self.get_download_path()
@@ -135,7 +140,7 @@ class MuzzleTab:
         base_name = os.path.splitext(os.path.basename(inp))[0]
         output_file = os.path.join(out_dir, f"{base_name}_converted.{fmt}")
 
-        cmd = ["ffmpeg", "-y", "-i", inp, output_file]
+        cmd = [f"{bundled_ffmpeg_dir}/ffmpeg", "-y", "-i", inp, output_file]
         
         self.log(f"Executing: {' '.join(cmd)}")
         
