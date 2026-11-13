@@ -79,5 +79,6 @@ COMPLETED_TEXTS = [
     "You're welcome!",
     "All done!",
     "Dudes be downloading anything...",
-    "Thanks for using Fetch!"
+    "Thanks for using Fetch!",
+    "#Downloaded! On some tuff shit."
 ]
