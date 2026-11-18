@@ -7,7 +7,8 @@ FETCH_TITLE = "Fetch"
 APP_VERSION = "1.7.0"
 
 SIZE_X = 540
-SIZE_Y = 520
+SIZE_Y = 580
+# window is getting way too tall
 
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".fetch_presets.json")
 

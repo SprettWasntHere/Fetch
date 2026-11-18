@@ -24,6 +24,7 @@ def run_download(
     log_callback,
     resource_path_func,
     progress_callback=None,
+    dump_thumbnail=False
 ):
     yt_dlp = update_ytdlp(log_callback)
     if not yt_dlp:
@@ -100,6 +101,9 @@ def run_download(
             if bundled_ffmpeg_dir and os.path.exists(bundled_ffmpeg_dir):
                 track_opts["ffmpeg_location"] = bundled_ffmpeg_dir
 
+            if dump_thumbnail:
+                track_opts["writethumbnail"] = True
+
             if audio_format:
                 fallback_album = (
                     playlist_name
@@ -126,14 +130,16 @@ def run_download(
                 ]
 
                 if embed_cover:
-                    track_opts["writethumbnail"] = True
                     track_opts["embedthumbnail"] = True
                     track_opts["postprocessor_args"].extend(
                         ["-id3v2_version", "3", "-write_id3v1", "1"]
                     )
-                    track_opts["postprocessors"].append(
-                        {"key": "EmbedThumbnail"}
-                    )
+                    
+                    embed_pp = {"key": "EmbedThumbnail"}
+                    if dump_thumbnail:
+                        embed_pp["already_have_thumbnail"] = True
+                        
+                    track_opts["postprocessors"].append(embed_pp)
             else:
                 track_opts["format"] = (
                     "bestvideo[vcodec^=avc1]+bestaudio/best[ext=mp4]/best"

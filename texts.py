@@ -71,7 +71,8 @@ DOWNLOAD_TEXTS = [
     "Thank you for using Fetch. I appreciate it.",
     "You have good taste in media links...",
     "You know, I think you're pretty cool.",
-    "Never adding mac support."
+    "Never adding mac support.",
+    "Fetch window keeps getting taller and taller."
 ]
 
 COMPLETED_TEXTS = [
@@ -80,5 +81,6 @@ COMPLETED_TEXTS = [
     "All done!",
     "Dudes be downloading anything...",
     "Thanks for using Fetch!",
-    "#Downloaded! On some tuff shit."
+    "#Downloaded! On some tuff shit.",
+    "Goodbye, World!"
 ]

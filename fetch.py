@@ -52,6 +52,10 @@ class MediaDownloaderApp:
             value=self.config_data.get("auto_clear_url", False)
         )
 
+        self.dump_thumbnail_var = tk.BooleanVar(
+            value=self.config_data.get("dump_thumbnail_separately", False)
+        )
+
         self.app_icon_img = None
         self.text_index = 0
         self.dropdown_popup = None
@@ -199,7 +203,8 @@ class MediaDownloaderApp:
         self.fetch_tab_btn = tk.Button(tab_header, text=" Fetch ", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.SUNKEN, font=WIN95_FONT_BOLD, command=lambda: self.switch_tab("fetch"))
         self.fetch_tab_btn.pack(side="left", padx=(0, 2))
 
-        self.muzzle_tab_btn = tk.Button(tab_header, text=" Muzzle ", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, command=lambda: self.switch_tab("muzzle"))
+        # v placeholder name because I don't like the name "Muzzle" v
+        self.muzzle_tab_btn = tk.Button(tab_header, text=" Unfinished Converter ", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, command=lambda: self.switch_tab("muzzle"))
         self.muzzle_tab_btn.pack(side="left")
 
         self.tab_container = tk.Frame(content_area, bg=WIN95_BG, bd=2, relief=tk.GROOVE)
@@ -271,6 +276,15 @@ class MediaDownloaderApp:
         )
         self.combo_label.pack(side="left", fill="x", expand=True, padx=(2, 0))
 
+        self.dump_thumb_chk = tk.Checkbutton(
+            form_frame, text="Dump thumbnail image",
+            variable=self.dump_thumbnail_var,
+            bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT,
+            selectcolor=WIN95_WHITE, font=WIN95_FONT,
+            command=lambda: self._update_dump_thumbnail()
+        )
+        self.dump_thumb_chk.grid(row=3, column=1, sticky="w", padx=(4, 0), pady=4)
+
         self.combo_btn = tk.Button(
             self.combo_container, text="▼", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT,
             font=("MS Sans Serif", 7), bd=1, relief=tk.RAISED, width=2, height=1,
@@ -281,12 +295,12 @@ class MediaDownloaderApp:
         self.combo_label.bind("<Button-1>", lambda e: self._toggle_instant_dropdown())
         self.combo_container.bind("<Button-1>", lambda e: self._toggle_instant_dropdown())
 
-        tk.Label(form_frame, text="Download Directory:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=3, column=0, sticky="w", pady=4)
+        tk.Label(form_frame, text="Download Directory:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=4, column=0, sticky="w", pady=4)
 
         self.dir_entry = tk.Entry(form_frame, bg=WIN95_WHITE, readonlybackground=WIN95_WHITE, fg=WIN95_TEXT, bd=2, relief=tk.SUNKEN, font=WIN95_FONT)
         self.dir_entry.insert(0, self.download_path)
         self.dir_entry.config(state="readonly")
-        self.dir_entry.grid(row=3, column=1, columnspan=2, sticky="ew", padx=(8, 4), pady=4)
+        self.dir_entry.grid(row=4, column=1, columnspan=2, sticky="ew", padx=(8, 4), pady=4)
 
         self.open_folder_after_var = tk.BooleanVar(
             value=self.config_data.get("open_folder_after", False)
@@ -296,15 +310,15 @@ class MediaDownloaderApp:
             bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT,
             selectcolor=WIN95_WHITE, font=WIN95_FONT, command=lambda: self._update_open_folder_after()
         )
-        self.open_dir_chk.grid(row=4, column=1, sticky="w", padx=(4, 0), pady=4)
+        self.open_dir_chk.grid(row=5, column=1, sticky="w", padx=(4, 0), pady=4)
 
         browse_btn = tk.Button(form_frame, text="Browse...", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, command=self.browse_folder)
-        browse_btn.grid(row=3, column=3, sticky="e", pady=4)
+        browse_btn.grid(row=4, column=3, sticky="e", pady=4)
 
-        tk.Label(form_frame, text="Folder Presets:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=5, column=0, sticky="w", pady=4)
+        tk.Label(form_frame, text="Folder Presets:", bg=WIN95_BG, fg=WIN95_TEXT, font=WIN95_FONT).grid(row=6, column=0, sticky="w", pady=4)
 
         self.preset_container = tk.Frame(form_frame, bg=WIN95_WHITE, bd=2, relief=tk.SUNKEN)
-        self.preset_container.grid(row=5, column=1, columnspan=2, sticky="w", padx=(8, 4), pady=4)
+        self.preset_container.grid(row=6, column=1, columnspan=2, sticky="w", padx=(8, 4), pady=4)
 
         self.preset_label = tk.Label(
             self.preset_container, textvariable=self.preset_var, bg=WIN95_WHITE, fg=WIN95_TEXT,
@@ -323,7 +337,7 @@ class MediaDownloaderApp:
         self.preset_container.bind("<Button-1>", lambda e: self._toggle_preset_dropdown())
 
         preset_btn_frame = tk.Frame(form_frame, bg=WIN95_BG)
-        preset_btn_frame.grid(row=5, column=3, sticky="e", pady=4)
+        preset_btn_frame.grid(row=6, column=3, sticky="e", pady=4)
 
         save_preset_btn = tk.Button(preset_btn_frame, text="Save", bg=WIN95_BG, fg=WIN95_TEXT, activebackground=WIN95_BG, activeforeground=WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=5, command=self.save_current_as_preset)
         save_preset_btn.pack(side="left", padx=(0, 2))
@@ -345,13 +359,17 @@ class MediaDownloaderApp:
         )
 
         self.status_box = tk.Text(
-            parent, height=9, bg=WIN95_WHITE, fg=WIN95_TEXT, bd=2,
+            parent, height=12, bg=WIN95_WHITE, fg=WIN95_TEXT, bd=2,
             relief=tk.SUNKEN, font=("Courier New", 9), state="disabled"
         )
         self.status_box.pack(fill="both", expand=True)
 
     def close_app(self):
         self.root.destroy()
+
+    def _update_dump_thumbnail(self):
+        self.config_data["dump_thumbnail_separately"] = self.dump_thumbnail_var.get()
+        save_config(self.config_data)
 
     def _toggle_theme_dropdown(self):
         if self.theme_popup and self.theme_popup.winfo_exists():
@@ -855,7 +873,8 @@ class MediaDownloaderApp:
                 self.download_path, 
                 self.log_status, 
                 resource_path, 
-                progress_callback=self.set_progress
+                progress_callback=self.set_progress,
+                dump_thumbnail = self.dump_thumbnail_var.get()
             )
             self.print_art_final()
             if self.auto_clear_url_var.get():
