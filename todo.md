@@ -18,6 +18,8 @@
 
 - cookies support for age restricted stuff
 
+- I BROKE COVERS/THUMBNAILS, MUST FIX OK
+
 
 # File Converter Tab (I think i'm naming it Muzzle or Scratch or something)
 
