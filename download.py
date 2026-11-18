@@ -130,6 +130,7 @@ def run_download(
                 ]
 
                 if embed_cover:
+                    track_opts["writethumbnail"] = True
                     track_opts["embedthumbnail"] = True
                     track_opts["postprocessor_args"].extend(
                         ["-id3v2_version", "3", "-write_id3v1", "1"]
