@@ -31,9 +31,3 @@
     - plus drag and drop
 
 - <strike>target format dropdown</strike>
-
-- output destination selector (will be shared with Fetch download folder presets)
-
-- dynamic ffmpeg command builder
-
-- conversion shall be handled in a seperate thread
