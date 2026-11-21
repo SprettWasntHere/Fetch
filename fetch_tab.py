@@ -217,14 +217,14 @@ class FetchTab(tk.Frame):
         actions.pack(fill="x", pady=(8, 4))
 
         self.download_btn = tk.Button(
-            actions, text=WIN95_DEFAULT_BTN_TEXT, bg=bg, fg=text_fg, disabledforeground=shared.WIN95_DISABLED,
-            bd=2, relief=tk.RAISED, font=WIN95_FONT_BOLD, pady=3, command=self.on_start_download,
+            actions, text=WIN95_DEFAULT_BTN_TEXT, bg=bg, fg=text_fg, disabledforeground=text_fg,
+            bd=2, relief=tk.RAISED, font=WIN95_FONT_BOLD, pady=3, command=self.on_start_download, activebackground=bg, activeforeground=text_fg
         )
         self.download_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))
 
         self.cancel_btn = tk.Button(
             actions, text="Cancel", bg=bg, fg=text_fg, disabledforeground=shared.WIN95_DISABLED,
-            bd=2, relief=tk.RAISED, font=WIN95_FONT_BOLD, pady=3, width=9, state="disabled", command=self.on_cancel_download,
+            bd=2, relief=tk.RAISED, font=WIN95_FONT_BOLD, pady=3, width=9, state="disabled", command=self.on_cancel_download, activebackground=bg, activeforeground=text_fg
         )
         self.cancel_btn.pack(side="right")
 
