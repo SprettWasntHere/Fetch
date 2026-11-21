@@ -3,20 +3,20 @@
 - <strike>Make the url stay after pressing download button.
     - Add a clear url textbox button.</strike>
 
-- cancel/stop download button
+- <strike>cancel/stop download button</strike>
 
-- get urls from text file for batch downloading
+- <strike>get urls from text file for batch downloading</strike>
     - drag and drop would be cool
 
 - <strike>open download folder checkbox (for instantly opening the directory where the media is downloaded)</strike>
 
-- speed and ETA tracker under download percentage
+- <strike>speed and ETA tracker under download percentage</strike>
 
-- download history
+- <strike>download history</strike>
 
-- quality selection
+- <strike>quality selection</strike>
 
-- cookies support for age restricted stuff
+- <streak>cookies support for age restricted stuff</streak>
 
 - <strike>I BROKE COVERS/THUMBNAILS, MUST FIX OK</strike>
 
