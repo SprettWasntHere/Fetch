@@ -25,7 +25,7 @@ from shared import (
 from ui_widgets import PopupController, apply_theme_to_tree
 from history_window import HistoryWindow
 from fetch_tab import FetchTab
-import muzzle
+import converter_tab
 
 class MediaDownloaderApp:
     def __init__(self):
@@ -141,15 +141,15 @@ class MediaDownloaderApp:
 
         self.fetch_tab_btn = tk.Button(
             tab_bar, text=" Fetch ", bg=bg, fg=text_fg, bd=2, relief=tk.SUNKEN, font=WIN95_FONT_BOLD,
-            command=lambda: self.switch_tab("fetch"),
+            command=lambda: self.switch_tab("fetch"), activebackground=bg, activeforeground=text_fg
         )
         self.fetch_tab_btn.pack(side="left", padx=(0, 2))
 
-        self.muzzle_tab_btn = tk.Button(
+        self.converter_tab_btn = tk.Button(
             tab_bar, text=" Unfinished Converter ", bg=bg, fg=text_fg, bd=2, relief=tk.RAISED, font=WIN95_FONT,
-            command=lambda: self.switch_tab("muzzle"),
+            command=lambda: self.switch_tab("converter"), activebackground=bg, activeforeground=text_fg
         )
-        self.muzzle_tab_btn.pack(side="left")
+        self.converter_tab_btn.pack(side="left")
 
         container = tk.Frame(body, bg=bg, bd=2, relief=tk.GROOVE)
         container.pack(fill="both", expand=True)
@@ -168,20 +168,20 @@ class MediaDownloaderApp:
         )
         self.fetch_tab.pack(fill="both", expand=True, padx=4, pady=4)
 
-        self.muzzle_frame = tk.Frame(container, bg=bg)
-        self.muzzle_tab_obj = muzzle.MuzzleTab(self.muzzle_frame, lambda: self.download_path, self.log_status)
+        self.converter_frame = tk.Frame(container, bg=bg)
+        self.converter_tab_obj = converter_tab.ConverterTab(self.converter_frame, lambda: self.download_path, self.log_status)
 
     def switch_tab(self, tab_name):
         self.fetch_tab.pack_forget()
-        self.muzzle_frame.pack_forget()
+        self.converter_frame.pack_forget()
         if tab_name == "fetch":
             self.fetch_tab_btn.config(relief=tk.SUNKEN, font=WIN95_FONT_BOLD)
-            self.muzzle_tab_btn.config(relief=tk.RAISED, font=WIN95_FONT)
+            self.converter_tab_btn.config(relief=tk.RAISED, font=WIN95_FONT)
             self.fetch_tab.pack(fill="both", expand=True, padx=4, pady=4)
         else:
-            self.muzzle_tab_btn.config(relief=tk.SUNKEN, font=WIN95_FONT_BOLD)
+            self.converter_tab_btn.config(relief=tk.SUNKEN, font=WIN95_FONT_BOLD)
             self.fetch_tab_btn.config(relief=tk.RAISED, font=WIN95_FONT)
-            self.muzzle_frame.pack(fill="both", expand=True, padx=4, pady=4)
+            self.converter_frame.pack(fill="both", expand=True, padx=4, pady=4)
         self.apply_theme(self.theme_var.get())
 
     def _toggle_theme_menu(self):

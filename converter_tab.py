@@ -4,9 +4,9 @@ import threading
 import subprocess
 import os
 
-MUZZLE_FORMATS = ["MP4", "MKV", "AVI", "MOV", "WEBM", "MP3", "WAV", "FLAC", "GIF", "VP6"]
+CONVERT_FORMATS = ["MP4", "MKV", "AVI", "MOV", "WEBM", "MP3", "WAV", "FLAC", "GIF", "VP6"]
 
-class MuzzleTab:
+class ConverterTab:
     def __init__(self, parent_frame, get_download_path_callback, log_callback):
         self.frame = tk.Frame(parent_frame, bg=parent_frame.cget("bg"))
         self.frame.pack(fill="both", expand=True)
@@ -88,7 +88,7 @@ class MuzzleTab:
 
     def _toggle_format_dropdown(self):
         menu = tk.Menu(self.frame, tearoff=0, relief=tk.RAISED, bd=2)
-        for fmt in MUZZLE_FORMATS:
+        for fmt in CONVERT_FORMATS:
             menu.add_command(label=fmt, command=lambda f=fmt: self._select_format(f))
         
         x = self.format_container.winfo_rootx()
@@ -121,11 +121,11 @@ class MuzzleTab:
     def start_conversion_thread(self):
         inp = self.input_file_var.get().strip()
         if not inp or not os.path.exists(inp):
-            self.log("Muzzle Error: Please select a valid input file.")
+            self.log("Converter Error: Please select a valid input file.")
             return
         
         self.convert_btn.config(state="disabled")
-        self.log("Starting Muzzle conversion thread...")
+        self.log("Starting conversion thread...")
         threading.Thread(target=self._run_conversion, daemon=True).start()
 
     def _run_conversion(self):
@@ -160,10 +160,10 @@ class MuzzleTab:
             
             process.wait()
             if process.returncode == 0:
-                self.log(f"Muzzle conversion completed: {output_file}")
+                self.log(f"Conversion completed: {output_file}")
             else:
-                self.log("Muzzle Error: FFmpeg process failed.")
+                self.log("Converter Error: FFmpeg process failed.")
         except Exception as e:
-            self.log(f"Muzzle Exception: {e}")
+            self.log(f"Converter Exception: {e}")
         finally:
             self.frame.after(0, lambda: self.convert_btn.config(state="normal"))
