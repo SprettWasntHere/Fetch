@@ -1,6 +1,7 @@
+import os
 import tkinter as tk
 import shared
-from shared import AVAILABLE_THEMES, DEFAULT_THEME, WIN95_FONT, WIN95_FONT_BOLD
+from shared import AVAILABLE_THEMES, DEFAULT_THEME, WIN95_FONT, WIN95_FONT_BOLD, resource_path
 
 
 def apply_theme_to_tree(root_widget, title_label=None, title_bar=None, white_containers=()):
@@ -183,6 +184,8 @@ def ask_preset_name_dialog(parent):
         width=2,
         height=1,
         command=lambda: close_dialog(None),
+        activebackground=shared.WIN95_BG,
+        activeforeground=shared.WIN95_TEXT
     ).pack(side="right", padx=2, pady=2)
 
     content = tk.Frame(outer, bg=shared.WIN95_BG)
@@ -213,7 +216,16 @@ def ask_preset_name_dialog(parent):
             close_dialog(val)
 
     tk.Button(
-        btn_box, text="OK", bg=shared.WIN95_BG, fg=shared.WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=8, command=on_ok
+        btn_box,
+        text="OK",
+        bg=shared.WIN95_BG,
+        fg=shared.WIN95_TEXT,
+        bd=2, relief=tk.RAISED,
+        font=WIN95_FONT,
+        width=8,
+        command=on_ok,
+        activebackground=shared.WIN95_BG,
+        activeforeground=shared.WIN95_TEXT
     ).pack(side="right", padx=(4, 0))
 
     tk.Button(
@@ -226,6 +238,8 @@ def ask_preset_name_dialog(parent):
         font=WIN95_FONT,
         width=8,
         command=lambda: close_dialog(None),
+        activebackground=shared.WIN95_BG,
+        activeforeground=shared.WIN95_TEXT
     ).pack(side="right")
 
     entry.bind("<Return>", on_ok)
@@ -263,6 +277,21 @@ def ask_delete_preset_dialog(parent, preset_name, presets_dict, on_deleted, on_l
     def close_dialog():
         dialog.destroy()
 
+    tk.Button(
+        title_bar,
+        text="✕",
+        bg=shared.WIN95_BG,
+        fg=shared.WIN95_TEXT,
+        font=("MS Sans Serif", 7, "bold"),
+        bd=1,
+        relief=tk.RAISED,
+        width=2,
+        height=1,
+        command=close_dialog,
+        activebackground=shared.WIN95_BG,
+        activeforeground=shared.WIN95_TEXT
+    ).pack(side="right", padx=2, pady=2)
+
     tk.Label(
         outer,
         text=f"Are you sure you want to delete the preset '{preset_name}'?",
@@ -292,7 +321,16 @@ def ask_delete_preset_dialog(parent, preset_name, presets_dict, on_deleted, on_l
         close_dialog()
 
     tk.Button(
-        btn_box, text="OK", bg=shared.WIN95_BG, fg=shared.WIN95_TEXT, bd=2, relief=tk.RAISED, font=WIN95_FONT, width=8, command=on_ok
+        btn_box,
+        text="OK",
+        bg=shared.WIN95_BG,
+        fg=shared.WIN95_TEXT,
+        bd=2, relief=tk.RAISED,
+        font=WIN95_FONT,
+        width=8,
+        command=on_ok,
+        activebackground=shared.WIN95_BG,
+        activeforeground=shared.WIN95_TEXT
     ).pack(side="right", padx=(4, 0))
 
     tk.Button(
@@ -305,6 +343,8 @@ def ask_delete_preset_dialog(parent, preset_name, presets_dict, on_deleted, on_l
         font=WIN95_FONT,
         width=8,
         command=close_dialog,
+        activebackground=shared.WIN95_BG,
+        activeforeground=shared.WIN95_TEXT
     ).pack(side="right")
 
     dialog.update_idletasks()

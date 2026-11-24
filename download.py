@@ -5,12 +5,14 @@ import time
 import random
 from concurrent.futures import ThreadPoolExecutor
 from texts import COMPLETED_TEXTS
-from shared import append_history_entry
+from shared import append_history_entry, escape_ansi
 
 cookie_log_state = set()
 
+
 def random_text():
     return random.choice(COMPLETED_TEXTS)
+
 
 def update_ytdlp(log_callback):
     try:
@@ -20,12 +22,14 @@ def update_ytdlp(log_callback):
         log_callback("Error: yt-dlp is missing from the environment.")
         return None
 
+
 def format_speed(speed_bps):
     if not speed_bps or speed_bps <= 0:
         return "-- KB/s"
     if speed_bps >= 1024 * 1024:
         return f"{speed_bps / (1024 * 1024):.2f} MB/s"
     return f"{speed_bps / 1024:.1f} KB/s"
+
 
 def format_eta(eta_seconds):
     if eta_seconds is None or eta_seconds < 0:
@@ -36,6 +40,7 @@ def format_eta(eta_seconds):
     if hours > 0:
         return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
     return f"{minutes:02d}:{seconds:02d}"
+
 
 def _build_video_format_selector(quality_choice):
     q = (quality_choice or "Best").strip()
@@ -56,11 +61,13 @@ def _build_video_format_selector(quality_choice):
         )
     return "bestvideo[vcodec^=avc1]+bestaudio/best[ext=mp4]/best"
 
+
 def _parse_audio_bitrate(quality_choice):
     q = (quality_choice or "192k").strip().lower()
     if q.endswith("k"):
         q = q[:-1]
     return q if q.isdigit() else "192"
+
 
 def _apply_cookie_opts(
     opts,
@@ -90,6 +97,7 @@ def _apply_cookie_opts(
             if warn_once is not None:
                 warn_once.add("loaded_browser")
             log_callback(f"Using cookies from browser: {cookie_browser.strip().lower()}")
+
 
 def parse_urls_from_txt(txt_path):
     urls = []
@@ -189,7 +197,7 @@ def run_download(
             if not info:
                 log_callback(f"Failed to extract metadata for: {source_url}")
                 append_history_entry(
-                    source_url, source_url, format_choice, quality_choice, download_path, "Failed"
+                    source_url, source_url, format_choice, quality_choice, download_path, "Failed", "Failed to extract metadata"
                 )
                 continue
 
@@ -211,19 +219,23 @@ def run_download(
                 ).strip() or "Playlist"
                 target_dir = os.path.join(download_path, safe_playlist_name)
                 entries = [e for e in info["entries"] if e]
-                log_callback(f"Found playlist '{playlist_name}' with {len(entries)} tracks.")
+                playlist_count = len(entries)
+                log_callback(f"Found playlist '{playlist_name}' with {playlist_count} tracks.")
 
-                for entry in entries:
+                for idx, entry in enumerate(entries, start=1):
                     track_url = (
                         entry.get("url")
                         or (f"https://www.youtube.com/watch?v={entry['id']}" if entry.get("id") else None)
                     )
                     if track_url:
+                        track_idx = entry.get("playlist_index") or idx
                         tasks.append({
                             "url": track_url,
                             "title": entry.get("title") or track_url,
                             "target_dir": target_dir,
                             "album": playlist_name,
+                            "track_number": track_idx,
+                            "track_total": playlist_count,
                         })
             else:
                 tasks.append({
@@ -231,16 +243,18 @@ def run_download(
                     "title": info.get("title") or source_url,
                     "target_dir": download_path,
                     "album": info.get("album") or os.path.basename(download_path) or "Single",
+                    "track_number": None,
+                    "track_total": None,
                 })
 
         except yt_dlp.utils.DownloadCancelled:
-            log_callback("Download cancelled by user.")
+            log_callback("Download cancelled.")
             report_progress(100, "-- KB/s", "--:--")
             return False
         except Exception as e:
             log_callback(f"Error analyzing {source_url}: {e}")
             append_history_entry(
-                source_url, source_url, format_choice, quality_choice, download_path, "Error"
+                source_url, source_url, format_choice, quality_choice, download_path, "Error", escape_ansi(str(e))
             )
 
     if not tasks:
@@ -253,7 +267,84 @@ def run_download(
     progress_lock = threading.Lock()
     cancelled_flag = [False]
 
-    def download_single_track(task):
+    task_start_time = time.monotonic()
+    active_speeds = {}          # task_idx -> speed_bps
+    track_downloaded = {}       # task_idx -> bytes downloaded so far
+    track_totals = {}           # task_idx -> estimated/known total bytes
+    track_done_set = set()      # task_idx finished/failed
+
+    def _compute_overall_metrics(task_idx=None, speed_bps=None, downloaded_bytes=None, total_bytes=None, mark_done=False):
+        with progress_lock:
+            if task_idx is not None:
+                if downloaded_bytes is not None:
+                    track_downloaded[task_idx] = max(0, downloaded_bytes)
+                if total_bytes is not None and total_bytes > 0:
+                    track_totals[task_idx] = total_bytes
+                if speed_bps is not None and speed_bps > 0:
+                    active_speeds[task_idx] = speed_bps
+                elif task_idx in active_speeds and (speed_bps is None or speed_bps <= 0):
+                    active_speeds.pop(task_idx, None)
+                if mark_done:
+                    track_done_set.add(task_idx)
+                    active_speeds.pop(task_idx, None)
+                    known_total = track_totals.get(task_idx)
+                    if known_total:
+                        track_downloaded[task_idx] = known_total
+
+            # Aggregate progress percentage across all tracks
+            partial_sum = 0.0
+            for i in range(total_tracks):
+                if i in track_done_set:
+                    partial_sum += 1.0
+                else:
+                    t_tot = track_totals.get(i)
+                    t_dl = track_downloaded.get(i, 0)
+                    if t_tot and t_tot > 0:
+                        partial_sum += min(1.0, max(0.0, t_dl / t_tot))
+            overall_pct = min(100.0, (partial_sum / total_tracks) * 100.0)
+
+            # Aggregate download speed across active downloads
+            agg_speed_bps = sum(active_speeds.values())
+
+            # Estimate remaining bytes across all tracks
+            known_totals_list = [track_totals[i] for i in track_totals if track_totals[i] > 0]
+            avg_track_size = (sum(known_totals_list) / len(known_totals_list)) if known_totals_list else 0
+
+            agg_total_bytes = 0.0
+            agg_dl_bytes = 0.0
+            for i in range(total_tracks):
+                if i in track_done_set:
+                    sz = track_totals.get(i) or track_downloaded.get(i) or avg_track_size
+                    agg_total_bytes += sz
+                    agg_dl_bytes += sz
+                else:
+                    dl_i = track_downloaded.get(i, 0)
+                    tot_i = track_totals.get(i)
+                    if tot_i and tot_i > 0:
+                        agg_total_bytes += tot_i
+                        agg_dl_bytes += min(dl_i, tot_i)
+                    elif avg_track_size > 0:
+                        est_tot = max(avg_track_size, float(dl_i))
+                        agg_total_bytes += est_tot
+                        agg_dl_bytes += min(float(dl_i), est_tot)
+                    else:
+                        agg_dl_bytes += float(dl_i)
+
+            remaining_bytes = max(0.0, agg_total_bytes - agg_dl_bytes)
+
+            if agg_speed_bps > 0 and remaining_bytes > 0:
+                eta_sec = remaining_bytes / agg_speed_bps
+            elif agg_dl_bytes > 0 and remaining_bytes > 0:
+                elapsed = max(0.001, time.monotonic() - task_start_time)
+                avg_rate = agg_dl_bytes / elapsed
+                eta_sec = (remaining_bytes / avg_rate) if avg_rate > 0 else -1
+            else:
+                eta_sec = -1
+
+            return overall_pct, format_speed(agg_speed_bps), format_eta(eta_sec)
+
+    def download_single_track(task_item):
+        task_idx, task = task_item
         if is_cancelled():
             cancelled_flag[0] = True
             return
@@ -262,6 +353,8 @@ def run_download(
         track_title = task["title"]
         target_dir = task["target_dir"]
         fallback_album = task["album"]
+        track_number = task.get("track_number")
+        track_total = task.get("track_total")
 
         os.makedirs(target_dir, exist_ok=True)
 
@@ -276,7 +369,7 @@ def run_download(
             track_opts["ffmpeg_location"] = bundled_ffmpeg_dir
 
         _apply_cookie_opts(
-            pre_opts,
+            track_opts,
             cookie_mode,
             cookie_file,
             cookie_browser,
@@ -301,10 +394,18 @@ def run_download(
                 pp_extract,
                 {"key": "FFmpegMetadata"},
             ]
-            track_opts["postprocessor_args"] = [
-                "-metadata",
-                f"album={fallback_album}",
-            ]
+            pp_args = ["-metadata", f"album={fallback_album}"]
+
+            # Embed track number in MP3 when downloaded from a playlist
+            if audio_format == "mp3" and track_number is not None:
+                track_tag_val = (
+                    f"{track_number}/{track_total}"
+                    if track_total and track_total > 0
+                    else str(track_number)
+                )
+                pp_args.extend(["-metadata", f"track={track_tag_val}"])
+
+            track_opts["postprocessor_args"] = pp_args
 
             if embed_cover:
                 track_opts["writethumbnail"] = True
@@ -336,26 +437,32 @@ def run_download(
                     log_callback(f"[{timestamp}] Downloading: {filename}")
                     logged_files.add(filename)
 
-                speed_str = format_speed(d.get("speed"))
-                eta_str = format_eta(d.get("eta"))
-
+                speed_val = d.get("speed")
                 total_bytes = d.get("total_bytes") or d.get("total_bytes_estimate")
                 downloaded_bytes = d.get("downloaded_bytes", 0)
 
-                with progress_lock:
-                    base_progress = (completed_tracks[0] / total_tracks) * 100
-                    if total_bytes and total_bytes > 0:
-                        track_fraction = min(1.0, max(0.0, downloaded_bytes / total_bytes)) / total_tracks
-                        current_progress = base_progress + (track_fraction * 100)
-                    else:
-                        current_progress = base_progress
-
-                report_progress(current_progress, speed_str, eta_str)
+                pct, speed_str, eta_str = _compute_overall_metrics(
+                    task_idx=task_idx,
+                    speed_bps=speed_val,
+                    downloaded_bytes=downloaded_bytes,
+                    total_bytes=total_bytes,
+                    mark_done=False,
+                )
+                report_progress(pct, speed_str, eta_str)
 
             elif status == "finished":
                 log_callback(
                     f"[{timestamp}] Finished processing: {os.path.basename(d.get('filename', 'file'))}"
                 )
+                total_bytes = d.get("total_bytes") or d.get("total_bytes_estimate") or d.get("downloaded_bytes")
+                pct, speed_str, eta_str = _compute_overall_metrics(
+                    task_idx=task_idx,
+                    speed_bps=0,
+                    downloaded_bytes=total_bytes,
+                    total_bytes=total_bytes,
+                    mark_done=False,
+                )
+                report_progress(pct, speed_str, eta_str)
 
         track_opts["progress_hooks"] = [ydl_hook]
 
@@ -365,9 +472,13 @@ def run_download(
 
             with progress_lock:
                 completed_tracks[0] += 1
-                pct = (completed_tracks[0] / total_tracks) * 100
 
-            report_progress(pct, "-- KB/s", "--:--")
+            pct, speed_str, eta_str = _compute_overall_metrics(
+                task_idx=task_idx,
+                speed_bps=0,
+                mark_done=True,
+            )
+            report_progress(pct, speed_str, eta_str)
             append_history_entry(
                 track_url,
                 track_title,
@@ -379,6 +490,7 @@ def run_download(
 
         except yt_dlp.utils.DownloadCancelled:
             cancelled_flag[0] = True
+            _compute_overall_metrics(task_idx=task_idx, speed_bps=0)
             append_history_entry(
                 track_url,
                 track_title,
@@ -394,8 +506,12 @@ def run_download(
             log_callback(f"Error downloading '{track_title}': {e}")
             with progress_lock:
                 completed_tracks[0] += 1
-                pct = (completed_tracks[0] / total_tracks) * 100
-            report_progress(pct, "-- KB/s", "--:--")
+            pct, speed_str, eta_str = _compute_overall_metrics(
+                task_idx=task_idx,
+                speed_bps=0,
+                mark_done=True,
+            )
+            report_progress(pct, speed_str, eta_str)
             append_history_entry(
                 track_url,
                 track_title,
@@ -403,6 +519,7 @@ def run_download(
                 quality_choice,
                 target_dir,
                 "Failed",
+                error=escape_ansi(str(e)),
             )
 
     if total_tracks >= 100:
@@ -420,12 +537,14 @@ def run_download(
         else:
             pause_duration = 0
 
-    for i in range(0, len(tasks), batch_size):
+    indexed_tasks = list(enumerate(tasks))
+
+    for i in range(0, len(indexed_tasks), batch_size):
         if is_cancelled():
             cancelled_flag[0] = True
             break
 
-        batch_tasks = tasks[i : i + batch_size]
+        batch_tasks = indexed_tasks[i : i + batch_size]
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             list(executor.map(download_single_track, batch_tasks))
 
@@ -433,7 +552,7 @@ def run_download(
             cancelled_flag[0] = True
             break
 
-        if pause_duration > 0 and i + batch_size < len(tasks):
+        if pause_duration > 0 and i + batch_size < len(indexed_tasks):
             timestamp = time.strftime("%H:%M:%S")
             log_callback(
                 f"[{timestamp}] Downloaded {len(batch_tasks)} tracks. Pausing for {pause_duration}s..."

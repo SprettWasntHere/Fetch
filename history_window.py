@@ -1,7 +1,7 @@
 import os
 import tkinter as tk
 import shared
-from shared import WIN95_FONT, WIN95_FONT_BOLD, load_history, clear_history
+from shared import WIN95_FONT, WIN95_FONT_BOLD, load_history, clear_history, open_notepad_with_file
 
 
 class HistoryWindow:
@@ -366,6 +366,13 @@ class HistoryWindow:
             except:
                 pass
 
+        def open_history_file():
+            try:
+                if os.path.exists(shared.HISTORY_FILE) and os.name == "nt":
+                    open_notepad_with_file(shared.HISTORY_FILE) # I might replace this lol
+            except:
+                pass
+
         def clear_all():
             clear_history()
             entries.clear()
@@ -401,6 +408,21 @@ class HistoryWindow:
         )
         open_btn.pack(side="left", padx=(0, 4))
         btns.append(open_btn)
+
+        open_history_file_btn = tk.Button(
+            btn_bar,
+            text="Open History File",
+            bg=bg,
+            fg=text_fg,
+            activebackground=bg,
+            activeforeground=text_fg,
+            bd=2,
+            relief=tk.RAISED,
+            font=WIN95_FONT,
+            command=open_history_file,
+        )
+        open_history_file_btn.pack(side="left", padx=(0, 4))
+        btns.append(open_history_file_btn)
 
         clear_btn = tk.Button(
             btn_bar,

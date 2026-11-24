@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import filedialog
 
 import shared
-from shared import WIN95_FONT, WIN95_FONT_BOLD, WIN95_DEFAULT_BTN_TEXT, save_config
+from shared import WIN95_FONT, WIN95_FONT_BOLD, WIN95_DEFAULT_BTN_TEXT, save_config, escape_ansi
 from download import parse_urls_from_txt
 from ui_widgets import ask_preset_name_dialog, ask_delete_preset_dialog
 
@@ -398,7 +398,7 @@ class FetchTab(tk.Frame):
 
     def append_log(self, text):
         self.status_box.config(state="normal")
-        self.status_box.insert(tk.END, text + "\n")
+        self.status_box.insert(tk.END, escape_ansi(text) + "\n")
         self.status_box.see(tk.END)
         self.status_box.config(state="disabled")
 

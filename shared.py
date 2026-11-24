@@ -1,8 +1,10 @@
 import os
+import re
 import sys
 import json
 import ctypes
 import time
+import subprocess as sp
 
 FETCH_TITLE = "Fetch"
 APP_VERSION = "1.8.0"
@@ -10,10 +12,17 @@ APP_VERSION = "1.8.0"
 SIZE_X = 630
 SIZE_Y = 590
 
+def open_notepad_with_file(file_path):
+    programName = "notepad.exe"
+    sp.Popen([programName, file_path])
+
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".fetch_presets.json")
 HISTORY_FILE = os.path.join(os.path.expanduser("~"), ".fetch_history.json")
-MAX_HISTORY_ITEMS = 200
+MAX_HISTORY_ITEMS = 10000
 
+def escape_ansi(line):
+    ansi_escape = re.compile(r'(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]')
+    return ansi_escape.sub('', line)
 
 def resource_path(relative_path="."):
     try:
@@ -109,6 +118,7 @@ def append_history_entry(
     quality_choice,
     save_dir,
     status="Completed",
+    error=None
 ):
     history = load_history()
     entry = {
@@ -119,6 +129,7 @@ def append_history_entry(
         "quality": quality_choice,
         "path": save_dir,
         "status": status,
+        "error": error
     }
     history.insert(0, entry)
     save_history(history)
